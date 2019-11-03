@@ -76,14 +76,6 @@ pub const EntryType = enum {
 
     const Self = @This();
 
-    pub fn eql(a: Self, b:Self) bool {
-        return a == b;
-    }
-
-    pub fn hash(x: Self) u32 {
-        return @enumToInt(x);
-    }
-
     pub fn fromStr(entry_type: []const u8) ?Self {
         if (std.mem.eql(u8, entry_type, "no")) {
             return EntryType.Normal;
