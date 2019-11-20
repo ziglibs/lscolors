@@ -235,3 +235,40 @@ test "parse yellow style" {
     assert(style.?.font_style.italic == false);
     assert(style.?.font_style.underline == false);
 }
+
+test "parse some fixed color" {
+    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
+    defer arena.deinit();
+    const allocator = &arena.allocator;
+
+    const style = try Style.fromAnsiSequence(allocator, "38;5;220;1");
+    assert(style.?.foreground.?.Fixed == 220 );
+    assert(style.?.background == null);
+    assert(style.?.font_style.bold == true);
+    assert(style.?.font_style.italic == false);
+    assert(style.?.font_style.underline == false);
+}
+
+test "parse some rgb color" {
+    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
+    defer arena.deinit();
+    const allocator = &arena.allocator;
+
+    const style = try Style.fromAnsiSequence(allocator, "38;2;123;123;123;1");
+    assert(style.?.foreground.?.RGB.r == 123);
+    assert(style.?.foreground.?.RGB.b == 123);
+    assert(style.?.foreground.?.RGB.g == 123);
+    assert(style.?.background == null);
+    assert(style.?.font_style.bold == true);
+    assert(style.?.font_style.italic == false);
+    assert(style.?.font_style.underline == false);
+}
+
+test "parse wrong rgb color" {
+    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
+    defer arena.deinit();
+    const allocator = &arena.allocator;
+
+    const style = try Style.fromAnsiSequence(allocator, "38;2;123");
+    assert(style == null);
+}
