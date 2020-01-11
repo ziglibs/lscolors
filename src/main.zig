@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
 const entrytypes = @import("entrytypes.zig");
@@ -10,13 +11,28 @@ const EntryTypeMap = std.hash_map.AutoHashMap(entrytypes.EntryType, style.Style)
 const PatternMap = std.hash_map.StringHashMap(style.Style);
 
 pub const LsColors = struct {
+    allocator: *Allocator,
+    str: []const u8,
     entry_type_mapping: EntryTypeMap,
     pattern_mapping: PatternMap,
 
     const Self = @This();
 
     /// Parses a LSCOLORS string
-    pub fn parseStr(alloc: *std.mem.Allocator, s: []const u8) !Self {
+    /// Does not take ownership of the string, copies it instead
+    pub fn parseStr(alloc: *Allocator, s: []const u8) !Self {
+        const str_copy = try std.mem.dupe(alloc, u8, s);
+        errdefer alloc.free(str_copy);
+
+        var result = try Self.parseStrOwned(alloc, str_copy);
+        result.allocator = alloc;
+
+        return result;
+    }
+
+    /// Parses a LSCOLORS string
+    /// Takes ownership of the string
+    pub fn parseStrOwned(alloc: *Allocator, s: []const u8) !Self {
         var entry_types = EntryTypeMap.init(alloc);
         var patterns = PatternMap.init(alloc);
 
@@ -41,20 +57,22 @@ pub const LsColors = struct {
         }
 
         return Self {
+            .allocator = std.debug.failing_allocator,
+            .str = s,
             .entry_type_mapping = entry_types,
             .pattern_mapping = patterns,
         };
     }
 
     /// Parses a default set of LSCOLORS rules
-    pub fn default(alloc: *std.mem.Allocator) !Self {
+    pub fn default(alloc: *Allocator) !Self {
         return Self.parseStr(alloc, ls_colors_default);
     }
 
     /// Parses the current environment variable `LSCOLORS`
     /// If the environment variable does not exist, falls back
     /// to the default set of LSCOLORS rules
-    pub fn fromEnv(alloc: *std.mem.Allocator) !Self {
+    pub fn fromEnv(alloc: *Allocator) !Self {
         if (std.os.getenv("LSCOLORS")) |env| {
             return Self.parseStr(alloc, env);
         } else {
@@ -64,6 +82,9 @@ pub const LsColors = struct {
 
     /// Frees all memory allocated by this struct
     pub fn deinit(self: *Self) void {
+        // Will only be freed when the string was copied
+        self.allocator.free(self.str);
+
         self.entry_type_mapping.deinit();
         self.pattern_mapping.deinit();
     }
@@ -87,7 +108,7 @@ test "parse default" {
     lsc.deinit();
 }
 
-test "parse  geoff.greer.fm default lscolors" {
+test "parse geoff.greer.fm default lscolors" {
     var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
     defer arena.deinit();
     const allocator = &arena.allocator;
