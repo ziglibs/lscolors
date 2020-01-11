@@ -82,17 +82,9 @@ pub const Style = struct {
 
     const Self = @This();
 
-    pub fn fromAnsiSequence(alloc: *std.mem.Allocator, code: []const u8) !?Self {
+    pub fn fromAnsiSequence(code: []const u8) ?Self {
         if (code.len == 0 or std.mem.eql(u8, code, "0") or std.mem.eql(u8, code, "00")) {
             return null;
-        }
-
-        var parts = std.ArrayList(u8).init(alloc);
-        var iter = std.mem.separate(code, ";");
-
-        while (iter.next()) |part| {
-            const value = std.fmt.parseInt(u8, part, 10) catch return null;
-            try parts.append(value);
         }
 
         var font_style = FontStyle.default();
@@ -103,8 +95,11 @@ pub const Style = struct {
         var red: u8 = 0;
         var green: u8 = 0;
 
-        for (parts.toSlice()) |part| {
-            switch(state) {
+        var iter = std.mem.separate(code, ";");
+        while (iter.next()) |str| {
+            const part = std.fmt.parseInt(u8, str, 10) catch return null;
+
+            switch (state) {
                 .Parse8 => {
                     switch(part) {
                         0 => font_style = FontStyle.default(),
@@ -203,32 +198,20 @@ pub const Style = struct {
 };
 
 test "parse empty style" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    assert((try Style.fromAnsiSequence(allocator, "")) == null);
-    assert((try Style.fromAnsiSequence(allocator, "0")) == null);
-    assert((try Style.fromAnsiSequence(allocator, "00")) == null);
+    assert(Style.fromAnsiSequence("") == null);
+    assert(Style.fromAnsiSequence("0") == null);
+    assert(Style.fromAnsiSequence("00") == null);
 }
 
 test "parse bold style" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    const style = try Style.fromAnsiSequence(allocator, "01");
+    const style = Style.fromAnsiSequence("01");
     assert(style.?.foreground == null);
     assert(style.?.background == null);
     assert(style.?.font_style.bold == true);
 }
 
 test "parse yellow style" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    const style = try Style.fromAnsiSequence(allocator, "33");
+    const style = Style.fromAnsiSequence("33");
     assert(style.?.foreground.? == Color.Yellow);
     assert(style.?.background == null);
     assert(style.?.font_style.bold == false);
@@ -237,11 +220,7 @@ test "parse yellow style" {
 }
 
 test "parse some fixed color" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    const style = try Style.fromAnsiSequence(allocator, "38;5;220;1");
+    const style = Style.fromAnsiSequence("38;5;220;1");
     assert(style.?.foreground.?.Fixed == 220 );
     assert(style.?.background == null);
     assert(style.?.font_style.bold == true);
@@ -250,11 +229,7 @@ test "parse some fixed color" {
 }
 
 test "parse some rgb color" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    const style = try Style.fromAnsiSequence(allocator, "38;2;123;123;123;1");
+    const style = Style.fromAnsiSequence("38;2;123;123;123;1");
     assert(style.?.foreground.?.RGB.r == 123);
     assert(style.?.foreground.?.RGB.b == 123);
     assert(style.?.foreground.?.RGB.g == 123);
@@ -265,10 +240,6 @@ test "parse some rgb color" {
 }
 
 test "parse wrong rgb color" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
-
-    const style = try Style.fromAnsiSequence(allocator, "38;2;123");
+    const style = Style.fromAnsiSequence("38;2;123");
     assert(style == null);
 }

@@ -45,7 +45,7 @@ pub const LsColors = struct {
                     if (iter.next() != null)
                         continue;
 
-                    if (try style.Style.fromAnsiSequence(alloc, sty)) |style_parsed| {
+                    if (style.Style.fromAnsiSequence(sty)) |style_parsed| {
                         if (entrytypes.EntryType.fromStr(pattern)) |entry_type| {
                             _ = try entry_types.put(entry_type, style_parsed);
                         } else {
