@@ -9,12 +9,13 @@ const ls_colors_default = "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;
 const EntryTypeMap = std.hash_map.AutoHashMap(entrytypes.EntryType, style.Style);
 const PatternMap = std.hash_map.StringHashMap(style.Style);
 
-const LsColors = struct {
+pub const LsColors = struct {
     entry_type_mapping: EntryTypeMap,
     pattern_mapping: PatternMap,
 
     const Self = @This();
 
+    /// Parses a LSCOLORS string
     pub fn parseStr(alloc: *std.mem.Allocator, s: []const u8) !Self {
         var entry_types = EntryTypeMap.init(alloc);
         var patterns = PatternMap.init(alloc);
@@ -45,10 +46,14 @@ const LsColors = struct {
         };
     }
 
+    /// Parses a default set of LSCOLORS rules
     pub fn default(alloc: *std.mem.Allocator) !Self {
         return Self.parseStr(alloc, ls_colors_default);
     }
 
+    /// Parses the current environment variable `LSCOLORS`
+    /// If the environment variable does not exist, falls back
+    /// to the default set of LSCOLORS rules
     pub fn fromEnv(alloc: *std.mem.Allocator) !Self {
         if (std.os.getenv("LSCOLORS")) |env| {
             return Self.parseStr(alloc, env);
@@ -57,6 +62,7 @@ const LsColors = struct {
         }
     }
 
+    /// Frees all memory allocated by this struct
     pub fn deinit(self: *Self) void {
         self.entry_type_mapping.deinit();
         self.pattern_mapping.deinit();
