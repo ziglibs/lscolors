@@ -11,7 +11,7 @@ const EntryTypeMap = std.hash_map.AutoHashMap(entrytypes.EntryType, style.Style)
 const PatternMap = std.hash_map.StringHashMap(style.Style);
 
 pub const LsColors = struct {
-    allocator: *Allocator,
+    allocator: ?*Allocator,
     str: []const u8,
     entry_type_mapping: EntryTypeMap,
     pattern_mapping: PatternMap,
@@ -57,7 +57,7 @@ pub const LsColors = struct {
         }
 
         return Self {
-            .allocator = std.debug.failing_allocator,
+            .allocator = null,
             .str = s,
             .entry_type_mapping = entry_types,
             .pattern_mapping = patterns,
@@ -83,7 +83,9 @@ pub const LsColors = struct {
     /// Frees all memory allocated by this struct
     pub fn deinit(self: *Self) void {
         // Will only be freed when the string was copied
-        self.allocator.free(self.str);
+        if (self.allocator) |alloc| {
+            alloc.free(self.str);
+        }
 
         self.entry_type_mapping.deinit();
         self.pattern_mapping.deinit();
@@ -91,29 +93,23 @@ pub const LsColors = struct {
 };
 
 test "parse empty" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
+    const allocator = std.testing.allocator;
 
-    const lsc = &try LsColors.parseStr(allocator, "");
+    var lsc = try LsColors.parseStr(allocator, "");
     lsc.deinit();
 }
 
 test "parse default" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
+    const allocator = std.testing.allocator;
 
-    const lsc = &try LsColors.default(allocator);
+    var lsc = try LsColors.default(allocator);
     lsc.deinit();
 }
 
 test "parse geoff.greer.fm default lscolors" {
-    var arena = std.heap.ArenaAllocator.init(std.heap.direct_allocator);
-    defer arena.deinit();
-    const allocator = &arena.allocator;
+    const allocator = std.testing.allocator;
 
-    const lsc = &try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
+    var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
     assert(lsc.entry_type_mapping.get(entrytypes.EntryType.Directory).?.value.foreground.? == style.Color.Blue);
     lsc.deinit();
 }
