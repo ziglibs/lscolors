@@ -1,0 +1,10 @@
+language: minimal
+
+install:
+  - sudo apt install jq
+  - curl https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball' | wget -i - -O tarball.tar.xz
+  - tar xf tarball.tar.xz
+  - mv zig-linux-x86_64-*/ bin
+
+script:
+  - ./bin/zig build test
