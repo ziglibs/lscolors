@@ -34,7 +34,10 @@ pub const LsColors = struct {
     /// Takes ownership of the string
     pub fn parseStrOwned(alloc: *Allocator, s: []const u8) !Self {
         var entry_types = EntryTypeMap.init(alloc);
+        errdefer entry_types.deinit();
+
         var patterns = PatternMap.init(alloc);
+        errdefer patterns.deinit();
 
         var rules_iter = std.mem.separate(s, ":");
         while (rules_iter.next()) |rule| {
@@ -80,7 +83,7 @@ pub const LsColors = struct {
         }
     }
 
-    /// Frees all memory allocated by this struct
+    /// Frees all memory allocated when initializing this struct
     pub fn deinit(self: *Self) void {
         // Will only be freed when the string was copied
         if (self.allocator) |alloc| {
