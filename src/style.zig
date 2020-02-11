@@ -1,4 +1,5 @@
 const std = @import("std");
+const expectEqual = std.testing.expectEqual;
 const assert = std.debug.assert;
 
 pub const ColorRGB = struct {
@@ -198,48 +199,56 @@ pub const Style = struct {
 };
 
 test "parse empty style" {
-    assert(Style.fromAnsiSequence("") == null);
-    assert(Style.fromAnsiSequence("0") == null);
-    assert(Style.fromAnsiSequence("00") == null);
+    expectEqual(Style.fromAnsiSequence(""), null);
+    expectEqual(Style.fromAnsiSequence("0"), null);
+    expectEqual(Style.fromAnsiSequence("00"), null);
 }
 
 test "parse bold style" {
     const style = Style.fromAnsiSequence("01");
-    assert(style.?.foreground == null);
-    assert(style.?.background == null);
-    assert(style.?.font_style.bold == true);
+    const expected = Style{
+        .foreground = null,
+        .background = null,
+        .font_style = FontStyle.bold(),
+    };
+
+    expectEqual(style, expected);
 }
 
 test "parse yellow style" {
     const style = Style.fromAnsiSequence("33");
-    assert(style.?.foreground.? == Color.Yellow);
-    assert(style.?.background == null);
-    assert(style.?.font_style.bold == false);
-    assert(style.?.font_style.italic == false);
-    assert(style.?.font_style.underline == false);
+    const expected = Style{
+        .foreground = Color.Yellow,
+        .background = null,
+        .font_style = FontStyle.default(),
+    };
+
+    expectEqual(style, expected);
 }
 
 test "parse some fixed color" {
     const style = Style.fromAnsiSequence("38;5;220;1");
-    assert(style.?.foreground.?.Fixed == 220 );
-    assert(style.?.background == null);
-    assert(style.?.font_style.bold == true);
-    assert(style.?.font_style.italic == false);
-    assert(style.?.font_style.underline == false);
+        const expected = Style{
+        .foreground = Color{ .Fixed = 220 },
+        .background = null,
+        .font_style = FontStyle.bold(),
+    };
+
+    expectEqual(style, expected);
 }
 
 test "parse some rgb color" {
     const style = Style.fromAnsiSequence("38;2;123;123;123;1");
-    assert(style.?.foreground.?.RGB.r == 123);
-    assert(style.?.foreground.?.RGB.b == 123);
-    assert(style.?.foreground.?.RGB.g == 123);
-    assert(style.?.background == null);
-    assert(style.?.font_style.bold == true);
-    assert(style.?.font_style.italic == false);
-    assert(style.?.font_style.underline == false);
+    const expected = Style{
+        .foreground = Color{ .RGB = ColorRGB{ .r = 123, .g = 123, .b = 123 } },
+        .background = null,
+        .font_style = FontStyle.bold(),
+    };
+
+    expectEqual(style, expected);
 }
 
 test "parse wrong rgb color" {
     const style = Style.fromAnsiSequence("38;2;123");
-    assert(style == null);
+    expectEqual(style, null);
 }
