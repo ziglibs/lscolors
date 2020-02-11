@@ -1,4 +1,5 @@
 const std = @import("std");
+const os = std.os;
 const File = std.fs.File;
 const expectEqual = std.testing.expectEqual;
 
@@ -131,32 +132,51 @@ pub const EntryType = enum {
         }
     }
 
-    /// Get the entry type of this filesystem item
-    pub fn fromFile(file: File) !Self {
-        const mode = try file.mode();
-
-        if (std.os.S_ISBLK(mode)) {
-            return EntryType.BlockDevice;
-        } else if (std.os.S_ISCHR(mode)) {
-            return EntryType.CharacterDevice;
-        } else if (std.os.S_ISDIR(mode)) {
-            return EntryType.Directory;
-        } else if (std.os.S_ISFIFO(mode)) {
-            return EntryType.FIFO;
-        } else if (std.os.S_ISSOCK(mode)) {
-            return EntryType.Socket;
-        } else {
-            return EntryType.Normal;
-        }
-    }
-
     /// Get the entry type for this path
     /// Does not take ownership of the path
     pub fn fromPath(path: []const u8) !Self {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        return try Self.fromFile(file);
+        const mode = @intCast(u32, try file.mode());
+
+        if (os.S_ISBLK(mode)) {
+            return EntryType.BlockDevice;
+        } else if (os.S_ISCHR(mode)) {
+            return EntryType.CharacterDevice;
+        } else if (os.S_ISDIR(mode)) {
+            return EntryType.Directory;
+        } else if (os.S_ISFIFO(mode)) {
+            return EntryType.FIFO;
+        } else if (os.S_ISSOCK(mode)) {
+            return EntryType.Socket;
+        } else if (mode & os.S_ISUID != 0) {
+            return EntryType.Setuid;
+        } else if (mode & os.S_ISGID != 0) {
+            return EntryType.Setgid;
+        } else if (mode & os.S_ISVTX != 0) {
+            return EntryType.Sticky;
+        } else if (os.S_ISREG(mode)) {
+            if (mode & os.S_IXUSR != 0) {
+                return EntryType.ExecutableFile;
+            } else if (mode & os.S_IXGRP != 0) {
+                return EntryType.ExecutableFile;
+            } else if (mode & os.S_IXOTH != 0) {
+                return EntryType.ExecutableFile;
+            }
+
+            return EntryType.RegularFile;
+        } else if (os.S_ISLNK(mode)) {
+            var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+            const target = try os.readlink(path, &path_buf);
+
+            var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
+            target_file.close();
+            
+            return EntryType.SymbolicLink;
+        } else {
+            return EntryType.Normal;
+        }
     }
 };
 
@@ -171,4 +191,8 @@ test "entry type of . and .." {
 
 test "entry type of /dev/null" {
     expectEqual(EntryType.fromPath("/dev/null"), .CharacterDevice);
+}
+
+test "entry type of /bin/sh" {
+    expectEqual(EntryType.fromPath("/bin/sh"), .ExecutableFile);
 }
