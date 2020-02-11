@@ -1,14 +1,31 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const assert = std.debug.assert;
+const expect = std.testing.expect;
+const expectEqual = std.testing.expectEqual;
 
-const entrytypes = @import("entrytypes.zig");
+const EntryType = @import("entrytypes.zig").EntryType;
 const style = @import("style.zig");
+const Style = style.Style;
 
 const ls_colors_default = "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:";
 
-const EntryTypeMap = std.hash_map.AutoHashMap(entrytypes.EntryType, style.Style);
-const PatternMap = std.hash_map.StringHashMap(style.Style);
+const EntryTypeMap = std.hash_map.AutoHashMap(EntryType, Style);
+const PatternMap = std.hash_map.StringHashMap(Style);
+
+fn pathMatchesPattern(path: []const u8, pattern: []const u8) bool {
+    if (path.len < 1) return false;
+    if (pattern.len < 1) return false;
+
+    return if (pattern[0] == '*') std.mem.endsWith(u8, path, pattern[1..])
+        else std.mem.eql(u8, path, pattern);
+}
+
+test "path matches pattern" {
+    expect(pathMatchesPattern("README", "README"));
+    expect(!pathMatchesPattern("README", "main.zig"));
+    expect(pathMatchesPattern("README.md", "*.md"));
+    expect(!pathMatchesPattern("README", "*.zig"));
+}
 
 pub const LsColors = struct {
     allocator: ?*Allocator,
@@ -48,8 +65,8 @@ pub const LsColors = struct {
                     if (iter.next() != null)
                         continue;
 
-                    if (style.Style.fromAnsiSequence(sty)) |style_parsed| {
-                        if (entrytypes.EntryType.fromStr(pattern)) |entry_type| {
+                    if (Style.fromAnsiSequence(sty)) |style_parsed| {
+                        if (EntryType.fromStr(pattern)) |entry_type| {
                             _ = try entry_types.put(entry_type, style_parsed);
                         } else {
                             _ = try patterns.put(pattern, style_parsed);
@@ -93,6 +110,31 @@ pub const LsColors = struct {
         self.entry_type_mapping.deinit();
         self.pattern_mapping.deinit();
     }
+
+
+    pub fn styleForPath(self: Self, path: []const u8) !Style {
+        const entry_type = try EntryType.fromPath(path);
+        const style_for_type = self.entry_type_mapping.get(entry_type);
+
+        if (style_for_type) |kv| {
+            const sty = kv.value;
+            if (entry_type != .Normal and entry_type != .RegularFile) {
+                return sty;
+            }
+        }
+
+        var iter = self.pattern_mapping.iterator();
+        while (iter.next()) |kv| {
+            const pattern = kv.key;
+            const sty = kv.value;
+
+            if (pathMatchesPattern(path, pattern)) {
+                return sty;
+            }
+        }
+
+        return if (style_for_type) |kv| kv.value else Style.default;
+    }
 };
 
 test "parse empty" {
@@ -113,6 +155,37 @@ test "parse geoff.greer.fm default lscolors" {
     const allocator = std.testing.allocator;
 
     var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
-    assert(lsc.entry_type_mapping.get(entrytypes.EntryType.Directory).?.value.foreground.? == style.Color.Blue);
-    lsc.deinit();
+    defer lsc.deinit();
+
+    const expected = Style{
+        .foreground = .Blue,
+        .background = null,
+        .font_style = style.FontStyle.default(),
+    };
+    expectEqual(lsc.entry_type_mapping.get(EntryType.Directory).?.value, expected);
+}
+
+test "get style of cwd from empty" {
+    const allocator = std.testing.allocator;
+
+    var lsc = try LsColors.parseStr(allocator, "");
+    defer lsc.deinit();
+
+    expectEqual(Style.default, try lsc.styleForPath("."));
+    expectEqual(Style.default, try lsc.styleForPath(".."));
+}
+
+test "get style of cwd from geoff.greer.fm" {
+    const allocator = std.testing.allocator;
+
+    var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
+    defer lsc.deinit();
+
+    const expected = Style{
+        .foreground = .Blue,
+        .background = null,
+        .font_style = style.FontStyle.default(),
+    };
+    expectEqual(expected, try lsc.styleForPath("."));
+    expectEqual(expected, try lsc.styleForPath(".."));
 }

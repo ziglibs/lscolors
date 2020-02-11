@@ -1,5 +1,6 @@
 const std = @import("std");
-const assert = std.debug.assert;
+const File = std.fs.File;
+const expectEqual = std.testing.expectEqual;
 
 pub const EntryType = enum {
     /// `no`: Normal (non-filename) text
@@ -130,8 +131,44 @@ pub const EntryType = enum {
         }
     }
 
+    /// Get the entry type of this filesystem item
+    pub fn fromFile(file: File) !Self {
+        const mode = try file.mode();
+
+        if (std.os.S_ISBLK(mode)) {
+            return EntryType.BlockDevice;
+        } else if (std.os.S_ISCHR(mode)) {
+            return EntryType.CharacterDevice;
+        } else if (std.os.S_ISDIR(mode)) {
+            return EntryType.Directory;
+        } else if (std.os.S_ISFIFO(mode)) {
+            return EntryType.FIFO;
+        } else if (std.os.S_ISSOCK(mode)) {
+            return EntryType.Socket;
+        } else {
+            return EntryType.Normal;
+        }
+    }
+
+    /// Get the entry type for this path
+    /// Does not take ownership of the path
+    pub fn fromPath(path: []const u8) !Self {
+        var file = try std.fs.cwd().openFile(path, .{});
+        defer file.close();
+
+        return try Self.fromFile(file);
+    }
 };
 
 test "parse entry types" {
-    assert(EntryType.fromStr("") == null);
+    expectEqual(EntryType.fromStr(""), null);
+}
+
+test "entry type of . and .." {
+    expectEqual(EntryType.fromPath("."), .Directory);
+    expectEqual(EntryType.fromPath(".."), .Directory);
+}
+
+test "entry type of /dev/null" {
+    expectEqual(EntryType.fromPath("/dev/null"), .CharacterDevice);
 }

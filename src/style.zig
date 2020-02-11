@@ -1,6 +1,5 @@
 const std = @import("std");
 const expectEqual = std.testing.expectEqual;
-const assert = std.debug.assert;
 
 pub const ColorRGB = struct {
     r: u8,
@@ -82,6 +81,12 @@ pub const Style = struct {
     font_style: FontStyle,
 
     const Self = @This();
+
+    pub const default = Self{
+        .foreground = null,
+        .background = null,
+        .font_style = FontStyle.default(),
+    };
 
     pub fn fromAnsiSequence(code: []const u8) ?Self {
         if (code.len == 0 or std.mem.eql(u8, code, "0") or std.mem.eql(u8, code, "00")) {
