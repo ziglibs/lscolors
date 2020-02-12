@@ -204,9 +204,9 @@ pub const Style = struct {
 };
 
 test "parse empty style" {
-    expectEqual(Style.fromAnsiSequence(""), null);
-    expectEqual(Style.fromAnsiSequence("0"), null);
-    expectEqual(Style.fromAnsiSequence("00"), null);
+    expectEqual(@as(?Style, null), Style.fromAnsiSequence(""));
+    expectEqual(@as(?Style, null), Style.fromAnsiSequence("0"));
+    expectEqual(@as(?Style, null), Style.fromAnsiSequence("00"));
 }
 
 test "parse bold style" {
@@ -217,7 +217,7 @@ test "parse bold style" {
         .font_style = FontStyle.bold(),
     };
 
-    expectEqual(style, expected);
+    expectEqual(@as(?Style, expected), style);
 }
 
 test "parse yellow style" {
@@ -228,7 +228,7 @@ test "parse yellow style" {
         .font_style = FontStyle.default(),
     };
 
-    expectEqual(style, expected);
+    expectEqual(@as(?Style, expected), style);
 }
 
 test "parse some fixed color" {
@@ -239,7 +239,7 @@ test "parse some fixed color" {
         .font_style = FontStyle.bold(),
     };
 
-    expectEqual(style, expected);
+    expectEqual(@as(?Style, expected), style);
 }
 
 test "parse some rgb color" {
@@ -250,10 +250,10 @@ test "parse some rgb color" {
         .font_style = FontStyle.bold(),
     };
 
-    expectEqual(style, expected);
+    expectEqual(@as(?Style, expected), style);
 }
 
 test "parse wrong rgb color" {
     const style = Style.fromAnsiSequence("38;2;123");
-    expectEqual(style, null);
+    expectEqual(@as(?Style, null), style);
 }
