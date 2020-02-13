@@ -1,4 +1,5 @@
 const std = @import("std");
+const os = std.os;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
@@ -32,6 +33,7 @@ pub const LsColors = struct {
     str: []const u8,
     entry_type_mapping: EntryTypeMap,
     pattern_mapping: PatternMap,
+    ln_target: bool,
 
     const Self = @This();
 
@@ -56,6 +58,8 @@ pub const LsColors = struct {
         var patterns = PatternMap.init(alloc);
         errdefer patterns.deinit();
 
+        var ln_target = false;
+
         var rules_iter = std.mem.separate(s, ":");
         while (rules_iter.next()) |rule| {
             var iter = std.mem.separate(rule, "=");
@@ -65,7 +69,9 @@ pub const LsColors = struct {
                     if (iter.next() != null)
                         continue;
 
-                    if (Style.fromAnsiSequence(sty)) |style_parsed| {
+                    if (std.mem.eql(u8, "ln", pattern) and std.mem.eql(u8, "target", sty)) {
+                        ln_target = true;
+                    } else if (Style.fromAnsiSequence(sty)) |style_parsed| {
                         if (EntryType.fromStr(pattern)) |entry_type| {
                             _ = try entry_types.put(entry_type, style_parsed);
                         } else {
@@ -81,6 +87,7 @@ pub const LsColors = struct {
             .str = s,
             .entry_type_mapping = entry_types,
             .pattern_mapping = patterns,
+            .ln_target = ln_target,
         };
     }
 
@@ -111,13 +118,23 @@ pub const LsColors = struct {
         self.pattern_mapping.deinit();
     }
 
+    pub const StyleForPathError = std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
 
-    pub fn styleForPath(self: Self, path: []const u8) !Style {
+    /// Queries the style for this particular path.
+    /// Does not take ownership of the path. Requires no allocations.
+    pub fn styleForPath(self: Self, path: []const u8) StyleForPathError!Style {
         const entry_type = try EntryType.fromPath(path);
         const style_for_type = self.entry_type_mapping.get(entry_type);
 
         if (style_for_type) |kv| {
             const sty = kv.value;
+            if (entry_type == .SymbolicLink and self.ln_target) {
+                var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+                const target = try os.readlink(path, &path_buf);
+
+                return try styleForPath(self, target);
+            }
+
             if (entry_type != .Normal and entry_type != .RegularFile) {
                 return sty;
             }
