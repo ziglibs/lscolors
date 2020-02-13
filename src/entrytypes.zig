@@ -78,58 +78,45 @@ pub const EntryType = enum {
 
     const Self = @This();
 
+    const NamedEntryType = struct {
+        name: []const u8,
+        typ: Self,
+    };
+
+    const str_type_map = [_]NamedEntryType{
+        .{ .name = "no", .typ = .Normal },
+        .{ .name = "fi", .typ = .RegularFile },
+        .{ .name = "di", .typ = .Directory },
+        .{ .name = "ln", .typ = .SymbolicLink },
+        .{ .name = "pi", .typ = .FIFO },
+        .{ .name = "so", .typ = .Socket },
+        .{ .name = "do", .typ = .Door },
+        .{ .name = "bd", .typ = .BlockDevice },
+        .{ .name = "cd", .typ = .CharacterDevice },
+        .{ .name = "or", .typ = .OrphanedSymbolicLink },
+        .{ .name = "su", .typ = .Setuid },
+        .{ .name = "sg", .typ = .Setgid },
+        .{ .name = "st", .typ = .Sticky },
+        .{ .name = "ow", .typ = .OtherWritable },
+        .{ .name = "tw", .typ = .StickyAndOtherWritable },
+        .{ .name = "ex", .typ = .ExecutableFile },
+        .{ .name = "mi", .typ = .MissingFile },
+        .{ .name = "ca", .typ = .Capabilities },
+        .{ .name = "mh", .typ = .MultipleHardLinks },
+        .{ .name = "lc", .typ = .LeftCode },
+        .{ .name = "rc", .typ = .RightCode },
+        .{ .name = "ec", .typ = .EndCode },
+        .{ .name = "rs", .typ = .Reset },
+        .{ .name = "cl", .typ = .ClearLine },
+    };
+
     pub fn fromStr(entry_type: []const u8) ?Self {
-        if (std.mem.eql(u8, entry_type, "no")) {
-            return EntryType.Normal;
-        } else if (std.mem.eql(u8, entry_type, "fi")) {
-            return EntryType.RegularFile;
-        } else if (std.mem.eql(u8, entry_type, "di")) {
-            return EntryType.Directory;
-        } else if (std.mem.eql(u8, entry_type, "ln")) {
-            return EntryType.SymbolicLink;
-        } else if (std.mem.eql(u8, entry_type, "pi")) {
-            return EntryType.FIFO;
-        } else if (std.mem.eql(u8, entry_type, "so")) {
-            return EntryType.Socket;
-        } else if (std.mem.eql(u8, entry_type, "do")) {
-            return EntryType.Door;
-        } else if (std.mem.eql(u8, entry_type, "bd")) {
-            return EntryType.BlockDevice;
-        } else if (std.mem.eql(u8, entry_type, "cd")) {
-            return EntryType.CharacterDevice;
-        } else if (std.mem.eql(u8, entry_type, "or")) {
-            return EntryType.OrphanedSymbolicLink;
-        } else if (std.mem.eql(u8, entry_type, "su")) {
-            return EntryType.Setuid;
-        } else if (std.mem.eql(u8, entry_type, "sg")) {
-            return EntryType.Setgid;
-        } else if (std.mem.eql(u8, entry_type, "st")) {
-            return EntryType.Sticky;
-        } else if (std.mem.eql(u8, entry_type, "ow")) {
-            return EntryType.OtherWritable;
-        } else if (std.mem.eql(u8, entry_type, "tw")) {
-            return EntryType.StickyAndOtherWritable;
-        } else if (std.mem.eql(u8, entry_type, "ex")) {
-            return EntryType.ExecutableFile;
-        } else if (std.mem.eql(u8, entry_type, "mi")) {
-            return EntryType.MissingFile;
-        } else if (std.mem.eql(u8, entry_type, "ca")) {
-            return EntryType.Capabilities;
-        } else if (std.mem.eql(u8, entry_type, "mh")) {
-            return EntryType.MultipleHardLinks;
-        } else if (std.mem.eql(u8, entry_type, "lc")) {
-            return EntryType.LeftCode;
-        } else if (std.mem.eql(u8, entry_type, "rc")) {
-            return EntryType.RightCode;
-        } else if (std.mem.eql(u8, entry_type, "ec")) {
-            return EntryType.EndCode;
-        } else if (std.mem.eql(u8, entry_type, "rs")) {
-            return EntryType.Reset;
-        } else if (std.mem.eql(u8, entry_type, "cl")) {
-            return EntryType.ClearLine;
-        } else {
-            return null;
+        for (str_type_map) |itm| {
+            if (std.mem.eql(u8, entry_type, itm.name)) {
+                return itm.typ;
+            }
         }
+        return null;
     }
 
     /// Get the entry type for this path
