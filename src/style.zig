@@ -51,6 +51,9 @@ pub const FontStyle = struct {
         .underline = true,
     };
 
+    pub fn isDefault(self: Self) bool {
+        return !self.bold and !self.italic and !self.underline;
+    }
 };
 
 const ParseState = enum {
@@ -79,6 +82,10 @@ pub const Style = struct {
         .background = null,
         .font_style = FontStyle.default,
     };
+
+    pub fn isDefault(self: Self) bool {
+        return self.foreground == null and self.background == null and self.font_style.isDefault();
+    }
 
     pub fn fromAnsiSequence(code: []const u8) ?Self {
         if (code.len == 0 or std.mem.eql(u8, code, "0") or std.mem.eql(u8, code, "00")) {
@@ -225,7 +232,7 @@ test "parse yellow style" {
 
 test "parse some fixed color" {
     const style = Style.fromAnsiSequence("38;5;220;1");
-        const expected = Style{
+    const expected = Style{
         .foreground = Color{ .Fixed = 220 },
         .background = null,
         .font_style = FontStyle.bold,

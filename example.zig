@@ -1,12 +1,3 @@
-# zig-lscolors
-
-[![Build Status](https://travis-ci.org/joachimschmidt557/zig-lscolors.svg?branch=master)](https://travis-ci.org/joachimschmidt557/zig-lscolors)
-
-A zig library for colorizing paths according to LS_COLORS
-
-## Quick Example
-
-```zig
 const std = @import("std");
 
 const LsColors = @import("src/main.zig").LsColors;
@@ -23,4 +14,3 @@ pub fn main() !void {
         std.debug.warn("{}\n", .{lsc.styled(itm.name)});
     }
 }
-```
