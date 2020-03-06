@@ -27,37 +27,29 @@ pub const FontStyle = struct {
 
     const Self = @This();
 
-    pub fn default() Self {
-        return Self {
-            .bold = false,
-            .italic = false,
-            .underline = false,
-        };
-    }
+    pub const default = Self {
+        .bold = false,
+        .italic = false,
+        .underline = false,
+    };
 
-    pub fn bold() Self {
-        return Self {
-            .bold = true,
-            .italic = false,
-            .underline = false,
-        };
-    }
+    pub const bold = Self {
+        .bold = true,
+        .italic = false,
+        .underline = false,
+    };
 
-    pub fn italic() Self {
-        return Self {
-            .bold = false,
-            .italic = true,
-            .underline = false,
-        };
-    }
+    pub const italic = Self {
+        .bold = false,
+        .italic = true,
+        .underline = false,
+    };
 
-    pub fn underline() Self {
-        return Self {
-            .bold = false,
-            .italic = false,
-            .underline = true,
-        };
-    }
+    pub const underline = Self {
+        .bold = false,
+        .italic = false,
+        .underline = true,
+    };
 
 };
 
@@ -85,7 +77,7 @@ pub const Style = struct {
     pub const default = Self{
         .foreground = null,
         .background = null,
-        .font_style = FontStyle.default(),
+        .font_style = FontStyle.default,
     };
 
     pub fn fromAnsiSequence(code: []const u8) ?Self {
@@ -93,7 +85,7 @@ pub const Style = struct {
             return null;
         }
 
-        var font_style = FontStyle.default();
+        var font_style = FontStyle.default;
         var foreground: ?Color = null;
         var background: ?Color = null;
 
@@ -108,7 +100,7 @@ pub const Style = struct {
             switch (state) {
                 .Parse8 => {
                     switch(part) {
-                        0 => font_style = FontStyle.default(),
+                        0 => font_style = FontStyle.default,
                         1 => font_style.bold = true,
                         3 => font_style.italic = true,
                         4 => font_style.underline = true,
@@ -214,7 +206,7 @@ test "parse bold style" {
     const expected = Style{
         .foreground = null,
         .background = null,
-        .font_style = FontStyle.bold(),
+        .font_style = FontStyle.bold,
     };
 
     expectEqual(@as(?Style, expected), style);
@@ -225,7 +217,7 @@ test "parse yellow style" {
     const expected = Style{
         .foreground = Color.Yellow,
         .background = null,
-        .font_style = FontStyle.default(),
+        .font_style = FontStyle.default,
     };
 
     expectEqual(@as(?Style, expected), style);
@@ -236,7 +228,7 @@ test "parse some fixed color" {
         const expected = Style{
         .foreground = Color{ .Fixed = 220 },
         .background = null,
-        .font_style = FontStyle.bold(),
+        .font_style = FontStyle.bold,
     };
 
     expectEqual(@as(?Style, expected), style);
@@ -247,7 +239,7 @@ test "parse some rgb color" {
     const expected = Style{
         .foreground = Color{ .RGB = ColorRGB{ .r = 123, .g = 123, .b = 123 } },
         .background = null,
-        .font_style = FontStyle.bold(),
+        .font_style = FontStyle.bold,
     };
 
     expectEqual(@as(?Style, expected), style);

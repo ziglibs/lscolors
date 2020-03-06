@@ -177,7 +177,7 @@ test "parse geoff.greer.fm default lscolors" {
     const expected = Style{
         .foreground = .Blue,
         .background = null,
-        .font_style = style.FontStyle.default(),
+        .font_style = style.FontStyle.default,
     };
     expectEqual(lsc.entry_type_mapping.get(EntryType.Directory).?.value, expected);
 }
@@ -201,7 +201,7 @@ test "get style of cwd from geoff.greer.fm" {
     const expected = Style{
         .foreground = .Blue,
         .background = null,
-        .font_style = style.FontStyle.default(),
+        .font_style = style.FontStyle.default,
     };
     expectEqual(expected, try lsc.styleForPath("."));
     expectEqual(expected, try lsc.styleForPath(".."));
