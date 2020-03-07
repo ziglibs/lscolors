@@ -1,5 +1,14 @@
 language: minimal
 
+os:
+  - linux
+  - osx
+  - freebsd
+
+arch:
+  - amd64
+  - aarch64
+
 install:
   - sudo apt install jq
   - curl https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball' | wget -i - -O tarball.tar.xz
