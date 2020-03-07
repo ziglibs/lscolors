@@ -11,19 +11,22 @@ arch:
 
 addons:
   apt:
-    packages:
-      - jq
+    packages: jq
   homebrew:
-    packages:
-      - jq
+    packages: jq
 
 before_install:
-  - if [ $TRAVIS_OS_NAME = "freebsd" ]; then sudo pkg install jq; fi
+  - if [ $TRAVIS_OS_NAME = "freebsd" ]; then sudo pkg install -y jq; fi
+  - wget https://ziglang.org/download/index.json -O zig.json
+  - if [ $TRAVIS_OS_NAME = "linux" ] && [ $TRAVIS_CPU_ARCH = "amd64" ]; then jq -r '.master."x86_64-linux".tarball' zig.json > url; fi
+  - if [ $TRAVIS_OS_NAME = "linux" ] && [ $TRAVIS_CPU_ARCH = "arm64" ]; then jq -r '.master."aarch64-linux".tarball' zig.json > url; fi
+  - if [ $TRAVIS_OS_NAME = "osx" ]; then jq -r '.master."x86_64-macos".tarball' zig.json > url; fi
+  - if [ $TRAVIS_OS_NAME = "freebsd" ]; then jq -r '.master."x86_64-freebsd".tarball' zig.json > url; fi
 
 install:
-  - curl https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball' | wget -i - -O tarball.tar.xz
+  - wget -i url -O tarball.tar.xz
   - tar xf tarball.tar.xz
-  - mv zig-linux-x86_64-*/ bin
+  - mv zig-*/ bin
 
 script:
   - ./bin/zig build test
