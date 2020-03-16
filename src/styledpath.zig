@@ -14,12 +14,12 @@ pub const StyledPath = struct {
 
     const Self = @This();
 
-    pub fn format(value: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, context: var, comptime Errors: type, comptime output: fn (@TypeOf(context), []const u8) Errors!void) Errors!void {
+    pub fn format(value: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, out_stream: var) @TypeOf(out_stream).Error!void {
         const sty = value.style;
         const prefix = ansi.Prefix{ .sty = sty };
         const postfix = ansi.Postfix{ .sty = sty };
 
-        return std.fmt.format(context, Errors, output, "{}{}{}", .{ prefix, value.path, postfix });
+        return std.fmt.format(out_stream, "{}{}{}", .{ prefix, value.path, postfix });
     }
 };
 
