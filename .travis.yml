@@ -12,11 +12,10 @@ arch:
 addons:
   apt:
     packages: jq
-  homebrew:
-    packages: jq
 
 before_install:
   - if [ $TRAVIS_OS_NAME = "freebsd" ]; then sudo pkg install -y jq; fi
+  - if [ $TRAVIS_OS_NAME = "osx" ]; then brew install jq; fi
   - wget https://ziglang.org/download/index.json -O zig.json
   - if [ $TRAVIS_OS_NAME = "linux" ] && [ $TRAVIS_CPU_ARCH = "amd64" ]; then jq -r '.master."x86_64-linux".tarball' zig.json > url; fi
   - if [ $TRAVIS_OS_NAME = "linux" ] && [ $TRAVIS_CPU_ARCH = "arm64" ]; then jq -r '.master."aarch64-linux".tarball' zig.json > url; fi
