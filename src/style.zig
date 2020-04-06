@@ -100,7 +100,7 @@ pub const Style = struct {
         var red: u8 = 0;
         var green: u8 = 0;
 
-        var iter = std.mem.separate(code, ";");
+        var iter = std.mem.split(code, ";");
         while (iter.next()) |str| {
             const part = std.fmt.parseInt(u8, str, 10) catch return null;
 

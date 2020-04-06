@@ -16,7 +16,7 @@ pub fn main() !void {
     var lsc = try LsColors.fromEnv(allocator);
     defer lsc.deinit();
 
-    const dir = try std.fs.cwd().openDir(".");
+    const dir = try std.fs.cwd().openDir(".", .{});
     var iterator = dir.iterate();
 
     while (try iterator.next()) |itm| {
