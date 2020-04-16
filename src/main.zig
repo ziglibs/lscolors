@@ -19,8 +19,7 @@ fn pathMatchesPattern(path: []const u8, pattern: []const u8) bool {
     if (path.len < 1) return false;
     if (pattern.len < 1) return false;
 
-    return if (pattern[0] == '*') std.mem.endsWith(u8, path, pattern[1..])
-        else std.mem.eql(u8, path, pattern);
+    return if (pattern[0] == '*') std.mem.endsWith(u8, path, pattern[1..]) else std.mem.eql(u8, path, pattern);
 }
 
 test "path matches pattern" {
@@ -84,7 +83,7 @@ pub const LsColors = struct {
             }
         }
 
-        return Self {
+        return Self{
             .allocator = null,
             .str = s,
             .entry_type_mapping = entry_types,
@@ -120,9 +119,7 @@ pub const LsColors = struct {
         self.pattern_mapping.deinit();
     }
 
-    pub const StyleForPathError = error{
-        TooManySymlinks,
-    } || std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
+    pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
 
     /// Queries the style for this particular path.
     /// Does not take ownership of the path. Requires no allocations.
@@ -168,7 +165,7 @@ pub const LsColors = struct {
     /// Creates a styled path struct for easy styled printing.
     /// Does not take ownership of the path. Requires no allocations.
     pub fn styled(self: Self, path: []const u8) StyleForPathError!StyledPath {
-        return StyledPath {
+        return StyledPath{
             .path = path,
             .style = try self.styleForPath(path),
         };

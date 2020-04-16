@@ -15,7 +15,12 @@ pub const Prefix = struct {
 
     const Self = @This();
 
-    pub fn format(value: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, out_stream: var) @TypeOf(out_stream).Error!void {
+    pub fn format(
+        value: Self,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        out_stream: var,
+    ) @TypeOf(out_stream).Error!void {
         if (value.sty.isDefault()) return;
 
         // Start the escape sequence
@@ -62,7 +67,7 @@ pub const Prefix = struct {
                 .Cyan => try out_stream.writeAll("36"),
                 .White => try out_stream.writeAll("37"),
                 .Fixed => |fixed| try std.fmt.format(out_stream, "38;5;{}", .{fixed}),
-                .RGB => |rgb| try std.fmt.format(out_stream, "38;2;{};{};{}", .{rgb.r, rgb.g, rgb.b}),
+                .RGB => |rgb| try std.fmt.format(out_stream, "38;2;{};{};{}", .{ rgb.r, rgb.g, rgb.b }),
             }
         }
 
@@ -84,7 +89,7 @@ pub const Prefix = struct {
                 .Cyan => try out_stream.writeAll("46"),
                 .White => try out_stream.writeAll("47"),
                 .Fixed => |fixed| try std.fmt.format(out_stream, "48;5;{}", .{fixed}),
-                .RGB => |rgb| try std.fmt.format(out_stream, "48;2;{};{};{}", .{rgb.r, rgb.g, rgb.b}),
+                .RGB => |rgb| try std.fmt.format(out_stream, "48;2;{};{};{}", .{ rgb.r, rgb.g, rgb.b }),
             }
         }
 
@@ -98,7 +103,12 @@ pub const Postfix = struct {
 
     const Self = @This();
 
-    pub fn format(value: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, out_stream: var) @TypeOf(out_stream).Error!void {
+    pub fn format(
+        value: Self,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        out_stream: var,
+    ) @TypeOf(out_stream).Error!void {
         if (value.sty.isDefault()) return;
 
         try out_stream.writeAll(Reset);

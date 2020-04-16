@@ -27,25 +27,25 @@ pub const FontStyle = struct {
 
     const Self = @This();
 
-    pub const default = Self {
+    pub const default = Self{
         .bold = false,
         .italic = false,
         .underline = false,
     };
 
-    pub const bold = Self {
+    pub const bold = Self{
         .bold = true,
         .italic = false,
         .underline = false,
     };
 
-    pub const italic = Self {
+    pub const italic = Self{
         .bold = false,
         .italic = true,
         .underline = false,
     };
 
-    pub const underline = Self {
+    pub const underline = Self{
         .bold = false,
         .italic = false,
         .underline = true,
@@ -106,7 +106,7 @@ pub const Style = struct {
 
             switch (state) {
                 .Parse8 => {
-                    switch(part) {
+                    switch (part) {
                         0 => font_style = FontStyle.default,
                         1 => font_style.bold = true,
                         3 => font_style.italic = true,
@@ -131,14 +131,18 @@ pub const Style = struct {
                         47 => background = Color.White,
                         48 => state = ParseState.ParseBgNon8,
                         49 => background = null,
-                        else => { return null; },
+                        else => {
+                            return null;
+                        },
                     }
                 },
                 .ParseFgNon8 => {
-                    switch(part) {
+                    switch (part) {
                         5 => state = ParseState.ParseFg256,
                         2 => state = ParseState.ParseFgRed,
-                        else => { return null; },
+                        else => {
+                            return null;
+                        },
                     }
                 },
                 .ParseFg256 => {
@@ -154,18 +158,22 @@ pub const Style = struct {
                     state = ParseState.ParseFgBlue;
                 },
                 .ParseFgBlue => {
-                    foreground = Color{ .RGB = ColorRGB{
-                        .r = red,
-                        .g = green,
-                        .b = part,
-                    } };
+                    foreground = Color{
+                        .RGB = ColorRGB{
+                            .r = red,
+                            .g = green,
+                            .b = part,
+                        },
+                    };
                     state = ParseState.Parse8;
                 },
                 .ParseBgNon8 => {
-                    switch(part) {
+                    switch (part) {
                         5 => state = ParseState.ParseBg256,
                         2 => state = ParseState.ParseBgRed,
-                        else => { return null; },
+                        else => {
+                            return null;
+                        },
                     }
                 },
                 .ParseBg256 => {
@@ -181,11 +189,13 @@ pub const Style = struct {
                     state = ParseState.ParseBgBlue;
                 },
                 .ParseBgBlue => {
-                    background = Color{ .RGB = ColorRGB{
-                        .r = red,
-                        .g = green,
-                        .b = part,
-                    } };
+                    background = Color{
+                        .RGB = ColorRGB{
+                            .r = red,
+                            .g = green,
+                            .b = part,
+                        },
+                    };
                     state = ParseState.Parse8;
                 },
             }
@@ -194,7 +204,7 @@ pub const Style = struct {
         if (state != ParseState.Parse8)
             return null;
 
-        return Self {
+        return Self{
             .foreground = foreground,
             .background = background,
             .font_style = font_style,

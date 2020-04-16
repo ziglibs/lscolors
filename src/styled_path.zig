@@ -14,7 +14,12 @@ pub const StyledPath = struct {
 
     const Self = @This();
 
-    pub fn format(value: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, out_stream: var) @TypeOf(out_stream).Error!void {
+    pub fn format(
+        value: Self,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        out_stream: var,
+    ) @TypeOf(out_stream).Error!void {
         const sty = value.style;
         const prefix = ansi.Prefix{ .sty = sty };
         const postfix = ansi.Postfix{ .sty = sty };
@@ -24,7 +29,7 @@ pub const StyledPath = struct {
 };
 
 test "format default styled path" {
-    const styled_path = StyledPath {
+    const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
         .style = Style.default,
     };
@@ -39,9 +44,9 @@ test "format default styled path" {
 }
 
 test "format bold path" {
-    const styled_path = StyledPath {
+    const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
-        .style = Style {
+        .style = Style{
             .foreground = null,
             .background = null,
             .font_style = FontStyle.bold,
@@ -58,13 +63,15 @@ test "format bold path" {
 }
 
 test "format bold and italic path" {
-    const styled_path = StyledPath {
+    const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
-        .style = Style {
+        .style = Style{
             .foreground = null,
             .background = null,
-            .font_style = FontStyle {
-                .bold = true, .italic = true, .underline = false
+            .font_style = FontStyle{
+                .bold = true,
+                .italic = true,
+                .underline = false,
             },
         },
     };
@@ -79,9 +86,9 @@ test "format bold and italic path" {
 }
 
 test "format colored path" {
-    const styled_path = StyledPath {
+    const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
-        .style = Style {
+        .style = Style{
             .foreground = Color.Red,
             .background = null,
             .font_style = FontStyle.default,

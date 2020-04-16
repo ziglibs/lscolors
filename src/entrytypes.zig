@@ -159,7 +159,7 @@ pub const EntryType = enum {
 
             var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
             target_file.close();
-            
+
             return EntryType.SymbolicLink;
         } else {
             return EntryType.Normal;
