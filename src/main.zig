@@ -120,39 +120,49 @@ pub const LsColors = struct {
         self.pattern_mapping.deinit();
     }
 
-    pub const StyleForPathError = std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
+    pub const StyleForPathError = error{
+        TooManySymlinks,
+    } || std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
 
     /// Queries the style for this particular path.
     /// Does not take ownership of the path. Requires no allocations.
-    pub fn styleForPath(self: Self, path: []const u8) StyleForPathError!Style {
-        const entry_type = try EntryType.fromPath(path);
-        const style_for_type = self.entry_type_mapping.get(entry_type);
+    pub fn styleForPath(self: Self, initial_path: []const u8) StyleForPathError!Style {
+        const max_link_depth = 20;
+        var i: usize = 0;
 
-        if (style_for_type) |kv| {
-            const sty = kv.value;
-            if (entry_type == .SymbolicLink and self.ln_target) {
-                var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
-                const target = try os.readlink(path, &path_buf);
+        var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var path = initial_path;
 
-                return try styleForPath(self, target);
+        while (i < max_link_depth) : (i += 1) {
+            const entry_type = try EntryType.fromPath(path);
+            const style_for_type = self.entry_type_mapping.get(entry_type);
+
+            if (style_for_type) |kv| {
+                const sty = kv.value;
+                if (entry_type == .SymbolicLink and self.ln_target) {
+                    path = try os.readlink(path, &path_buf);
+                    continue;
+                }
+
+                if (entry_type != .Normal and entry_type != .RegularFile) {
+                    return sty;
+                }
             }
 
-            if (entry_type != .Normal and entry_type != .RegularFile) {
-                return sty;
+            var iter = self.pattern_mapping.iterator();
+            while (iter.next()) |kv| {
+                const pattern = kv.key;
+                const sty = kv.value;
+
+                if (pathMatchesPattern(path, pattern)) {
+                    return sty;
+                }
             }
+
+            return if (style_for_type) |kv| kv.value else Style.default;
         }
 
-        var iter = self.pattern_mapping.iterator();
-        while (iter.next()) |kv| {
-            const pattern = kv.key;
-            const sty = kv.value;
-
-            if (pathMatchesPattern(path, pattern)) {
-                return sty;
-            }
-        }
-
-        return if (style_for_type) |kv| kv.value else Style.default;
+        return error.TooManySymlinks;
     }
 
     /// Creates a styled path struct for easy styled printing.
