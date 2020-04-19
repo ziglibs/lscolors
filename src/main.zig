@@ -257,5 +257,18 @@ test "get styled path components from default" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents(".")});
     defer allocator.free(actual);
 
-    // expectEqualSlices(u8, expected, actual);
+    expectEqualSlices(u8, expected, actual);
+}
+
+test "get styled path components from default" {
+    const allocator = std.testing.allocator;
+
+    var lsc = try LsColors.default(allocator);
+    defer lsc.deinit();
+
+    const expected = "\x1B[1;34m./\x1B[0mmain.zig";
+    const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents("./main.zig")});
+    defer allocator.free(actual);
+
+    expectEqualSlices(u8, expected, actual);
 }

@@ -48,14 +48,18 @@ pub const StyledPathComponents = struct {
             const old_sty = current_sty;
             current_sty = value.lsc.styleForPath(component.path) catch Style.default;
 
-            // Emit postfix of previous style
-            const postfix = ansi.Postfix{ .sty = old_sty };
+            if (!old_sty.eql(current_sty)) {
+                // Emit postfix of previous style
+                const postfix = ansi.Postfix{ .sty = old_sty };
 
-            // Emit prefix of current style
-            const prefix = ansi.Prefix{ .sty = current_sty };
+                // Emit prefix of current style
+                const prefix = ansi.Prefix{ .sty = current_sty };
+
+                try std.fmt.format(out_stream, "{}{}", .{ postfix, prefix });
+            }
 
             // Actual item name
-            try std.fmt.format(out_stream, "{}{}{}", .{ postfix, prefix, component.name });
+            try std.fmt.format(out_stream, "{}", .{ component.name });
         }
 
         const postfix = ansi.Postfix{ .sty = current_sty };
