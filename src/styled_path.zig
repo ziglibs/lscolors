@@ -1,12 +1,13 @@
 const std = @import("std");
 const testing = std.testing;
 
+const LsColors = @import("main.zig").LsColors;
 const style = @import("style.zig");
 const Style = style.Style;
 const FontStyle = style.FontStyle;
 const Color = style.Color;
-
 const ansi = @import("ansi.zig");
+const PathComponentIterator = @import("path_components.zig").PathComponentIterator;
 
 pub const StyledPath = struct {
     path: []const u8,
@@ -25,6 +26,40 @@ pub const StyledPath = struct {
         const postfix = ansi.Postfix{ .sty = sty };
 
         return std.fmt.format(out_stream, "{}{}{}", .{ prefix, value.path, postfix });
+    }
+};
+
+pub const StyledPathComponents = struct {
+    path: []const u8,
+    lsc: *LsColors,
+
+    const Self = @This();
+    
+    pub fn format(
+        value: Self,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        out_stream: var,
+    ) @TypeOf(out_stream).Error!void {
+        var iter = PathComponentIterator.init(value.path);
+        var current_sty = Style.default;
+
+        while (iter.next()) |component| {
+            const old_sty = current_sty;
+            current_sty = value.lsc.styleForPath(component.path) catch Style.default;
+
+            // Emit postfix of previous style
+            const postfix = ansi.Postfix{ .sty = old_sty };
+
+            // Emit prefix of current style
+            const prefix = ansi.Prefix{ .sty = current_sty };
+
+            // Actual item name
+            try std.fmt.format(out_stream, "{}{}{}", .{ postfix, prefix, component.name });
+        }
+
+        const postfix = ansi.Postfix{ .sty = current_sty };
+        try std.fmt.format(out_stream, "{}", .{ postfix });
     }
 };
 

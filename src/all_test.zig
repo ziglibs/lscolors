@@ -4,4 +4,5 @@ test "everything" {
     _ = @import("style.zig");
     _ = @import("styled_path.zig");
     _ = @import("ansi.zig");
+    _ = @import("path_components.zig");
 }
