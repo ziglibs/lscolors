@@ -25,7 +25,7 @@ pub const PathComponentIterator = struct {
     pub fn next(self: *Self) ?PathComponent {
         if (self.i < self.path.len) {
             const old_i = self.i;
-            
+
             while (self.i < self.path.len) : (self.i += 1) {
                 if (std.fs.path.isSep(self.path[self.i])) {
                     break;
@@ -36,7 +36,7 @@ pub const PathComponentIterator = struct {
             if (self.i < self.path.len) {
                 self.i += 1;
             }
-            
+
             return PathComponent{
                 .name = self.path[old_i..self.i],
                 .path = self.path[0..self.i],

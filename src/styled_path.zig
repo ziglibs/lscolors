@@ -34,7 +34,7 @@ pub const StyledPathComponents = struct {
     lsc: *LsColors,
 
     const Self = @This();
-    
+
     pub fn format(
         value: Self,
         comptime fmt: []const u8,
@@ -59,11 +59,11 @@ pub const StyledPathComponents = struct {
             }
 
             // Actual item name
-            try std.fmt.format(out_stream, "{}", .{ component.name });
+            try std.fmt.format(out_stream, "{}", .{component.name});
         }
 
         const postfix = ansi.Postfix{ .sty = current_sty };
-        try std.fmt.format(out_stream, "{}", .{ postfix });
+        try std.fmt.format(out_stream, "{}", .{postfix});
     }
 };
 
