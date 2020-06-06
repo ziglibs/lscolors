@@ -1,6 +1,6 @@
 # zig-lscolors
 
-[![Build Status](https://travis-ci.org/joachimschmidt557/zig-lscolors.svg?branch=master)](https://travis-ci.org/joachimschmidt557/zig-lscolors)
+![CI](https://github.com/ziglibs/zig-lscolors/workflows/CI/badge.svg)
 
 A zig library for colorizing paths according to LS_COLORS
 
