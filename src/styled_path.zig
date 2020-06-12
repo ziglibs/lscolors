@@ -19,13 +19,13 @@ pub const StyledPath = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        out_stream: var,
-    ) @TypeOf(out_stream).Error!void {
+        writer: var,
+    ) @TypeOf(writer).Error!void {
         const sty = value.style;
         const prefix = ansi.Prefix{ .sty = sty };
         const postfix = ansi.Postfix{ .sty = sty };
 
-        return std.fmt.format(out_stream, "{}{}{}", .{ prefix, value.path, postfix });
+        return std.fmt.format(writer, "{}{}{}", .{ prefix, value.path, postfix });
     }
 };
 
@@ -39,8 +39,8 @@ pub const StyledPathComponents = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        out_stream: var,
-    ) @TypeOf(out_stream).Error!void {
+        writer: var,
+    ) @TypeOf(writer).Error!void {
         var iter = PathComponentIterator.init(value.path);
         var current_sty = Style.default;
 
@@ -55,15 +55,15 @@ pub const StyledPathComponents = struct {
                 // Emit prefix of current style
                 const prefix = ansi.Prefix{ .sty = current_sty };
 
-                try std.fmt.format(out_stream, "{}{}", .{ postfix, prefix });
+                try std.fmt.format(writer, "{}{}", .{ postfix, prefix });
             }
 
             // Actual item name
-            try std.fmt.format(out_stream, "{}", .{component.name});
+            try std.fmt.format(writer, "{}", .{component.name});
         }
 
         const postfix = ansi.Postfix{ .sty = current_sty };
-        try std.fmt.format(out_stream, "{}", .{postfix});
+        try std.fmt.format(writer, "{}", .{postfix});
     }
 };
 
