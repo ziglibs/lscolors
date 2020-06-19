@@ -1,5 +1,6 @@
 const std = @import("std");
 const os = std.os;
+const ComptimeStringMap = std.ComptimeStringMap;
 const File = std.fs.File;
 const expectEqual = std.testing.expectEqual;
 
@@ -78,45 +79,35 @@ pub const EntryType = enum {
 
     const Self = @This();
 
-    const NamedEntryType = struct {
-        name: []const u8,
-        typ: Self,
-    };
-
-    const str_type_map = [_]NamedEntryType{
-        .{ .name = "no", .typ = .Normal },
-        .{ .name = "fi", .typ = .RegularFile },
-        .{ .name = "di", .typ = .Directory },
-        .{ .name = "ln", .typ = .SymbolicLink },
-        .{ .name = "pi", .typ = .FIFO },
-        .{ .name = "so", .typ = .Socket },
-        .{ .name = "do", .typ = .Door },
-        .{ .name = "bd", .typ = .BlockDevice },
-        .{ .name = "cd", .typ = .CharacterDevice },
-        .{ .name = "or", .typ = .OrphanedSymbolicLink },
-        .{ .name = "su", .typ = .Setuid },
-        .{ .name = "sg", .typ = .Setgid },
-        .{ .name = "st", .typ = .Sticky },
-        .{ .name = "ow", .typ = .OtherWritable },
-        .{ .name = "tw", .typ = .StickyAndOtherWritable },
-        .{ .name = "ex", .typ = .ExecutableFile },
-        .{ .name = "mi", .typ = .MissingFile },
-        .{ .name = "ca", .typ = .Capabilities },
-        .{ .name = "mh", .typ = .MultipleHardLinks },
-        .{ .name = "lc", .typ = .LeftCode },
-        .{ .name = "rc", .typ = .RightCode },
-        .{ .name = "ec", .typ = .EndCode },
-        .{ .name = "rs", .typ = .Reset },
-        .{ .name = "cl", .typ = .ClearLine },
-    };
+    const str_type_map = ComptimeStringMap(Self, .{
+        .{ "no", .Normal },
+        .{ "fi", .RegularFile },
+        .{ "di", .Directory },
+        .{ "ln", .SymbolicLink },
+        .{ "pi", .FIFO },
+        .{ "so", .Socket },
+        .{ "do", .Door },
+        .{ "bd", .BlockDevice },
+        .{ "cd", .CharacterDevice },
+        .{ "or", .OrphanedSymbolicLink },
+        .{ "su", .Setuid },
+        .{ "sg", .Setgid },
+        .{ "st", .Sticky },
+        .{ "ow", .OtherWritable },
+        .{ "tw", .StickyAndOtherWritable },
+        .{ "ex", .ExecutableFile },
+        .{ "mi", .MissingFile },
+        .{ "ca", .Capabilities },
+        .{ "mh", .MultipleHardLinks },
+        .{ "lc", .LeftCode },
+        .{ "rc", .RightCode },
+        .{ "ec", .EndCode },
+        .{ "rs", .Reset },
+        .{ "cl", .ClearLine },
+    });
 
     pub fn fromStr(entry_type: []const u8) ?Self {
-        for (str_type_map) |itm| {
-            if (std.mem.eql(u8, entry_type, itm.name)) {
-                return itm.typ;
-            }
-        }
-        return null;
+        return str_type_map.get(entry_type);
     }
 
     /// Get the entry type for this path
