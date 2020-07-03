@@ -43,7 +43,7 @@ pub const LsColors = struct {
     /// Parses a LSCOLORS string
     /// Does not take ownership of the string, copies it instead
     pub fn parseStr(alloc: *Allocator, s: []const u8) !Self {
-        const str_copy = try std.mem.dupe(alloc, u8, s);
+        const str_copy = try alloc.dupe(u8, s);
         errdefer alloc.free(str_copy);
 
         var result = try Self.parseStrOwned(alloc, str_copy);
