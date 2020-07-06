@@ -136,8 +136,7 @@ pub const LsColors = struct {
             const entry_type = try EntryType.fromPath(path);
             const style_for_type = self.entry_type_mapping.get(entry_type);
 
-            if (style_for_type) |kv| {
-                const sty = kv.value;
+            if (style_for_type) |sty| {
                 if (entry_type == .SymbolicLink and self.ln_target) {
                     path = try os.readlink(path, &path_buf);
                     continue;
@@ -148,17 +147,16 @@ pub const LsColors = struct {
                 }
             }
 
-            var iter = self.pattern_mapping.iterator();
-            while (iter.next()) |kv| {
-                const pattern = kv.key;
-                const sty = kv.value;
+            for (self.pattern_mapping.items()) |entry| {
+                const pattern = entry.key;
+                const sty = entry.value;
 
                 if (pathMatchesPattern(path, pattern)) {
                     return sty;
                 }
             }
 
-            return if (style_for_type) |kv| kv.value else Style.default;
+            return if (style_for_type) |sty| sty else Style.default;
         }
 
         return error.TooManySymlinks;
@@ -173,6 +171,9 @@ pub const LsColors = struct {
         };
     }
 
+    /// Returns a StyledPathComponent instance which, when formatted,
+    /// nicely stylizes each component (directories and files) of the
+    /// path with the respective style
     pub fn styledComponents(self: *Self, path: []const u8) StyledPathComponents {
         return StyledPathComponents{
             .path = path,
@@ -206,7 +207,7 @@ test "parse geoff.greer.fm default lscolors" {
         .background = null,
         .font_style = style.FontStyle.default,
     };
-    expectEqual(lsc.entry_type_mapping.get(EntryType.Directory).?.value, expected);
+    expectEqual(lsc.entry_type_mapping.get(EntryType.Directory).?, expected);
 }
 
 test "get style of cwd from empty" {
