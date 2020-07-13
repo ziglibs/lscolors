@@ -19,7 +19,7 @@ pub const StyledPath = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        writer: var,
+        writer: anytype,
     ) @TypeOf(writer).Error!void {
         const sty = value.style;
         const prefix = ansi.Prefix{ .sty = sty };
@@ -39,7 +39,7 @@ pub const StyledPathComponents = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        writer: var,
+        writer: anytype,
     ) @TypeOf(writer).Error!void {
         var iter = PathComponentIterator.init(value.path);
         var current_sty = Style.default;
