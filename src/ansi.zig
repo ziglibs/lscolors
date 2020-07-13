@@ -19,7 +19,7 @@ pub const Prefix = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        writer: var,
+        writer: anytype,
     ) @TypeOf(writer).Error!void {
         if (value.sty.isDefault()) return;
 
@@ -107,7 +107,7 @@ pub const Postfix = struct {
         value: Self,
         comptime fmt: []const u8,
         options: std.fmt.FormatOptions,
-        writer: var,
+        writer: anytype,
     ) @TypeOf(writer).Error!void {
         if (value.sty.isDefault()) return;
 
