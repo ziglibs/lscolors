@@ -16,6 +16,8 @@ const ls_colors_default = "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;
 
 const EntryTypeMap = std.hash_map.AutoHashMap(EntryType, Style);
 const PatternMap = std.hash_map.StringHashMap(Style);
+const EntryTypeMapUnmanaged = std.hash_map.AutoHashMapUnmanaged(EntryType, Style);
+const PatternMapUnmanaged = std.hash_map.StringHashMapUnmanaged(Style);
 
 fn pathMatchesPattern(path: []const u8, pattern: []const u8) bool {
     if (path.len < 1) return false;
@@ -32,10 +34,10 @@ test "path matches pattern" {
 }
 
 pub const LsColors = struct {
-    allocator: ?*Allocator,
-    str: []const u8,
-    entry_type_mapping: EntryTypeMap,
-    pattern_mapping: PatternMap,
+    allocator: *Allocator,
+    copied_str: ?[]const u8,
+    entry_type_mapping: EntryTypeMapUnmanaged,
+    pattern_mapping: PatternMapUnmanaged,
     ln_target: bool,
 
     const Self = @This();
@@ -47,7 +49,7 @@ pub const LsColors = struct {
         errdefer alloc.free(str_copy);
 
         var result = try Self.parseStrOwned(alloc, str_copy);
-        result.allocator = alloc;
+        result.copied_str = str_copy;
 
         return result;
     }
@@ -86,10 +88,10 @@ pub const LsColors = struct {
         }
 
         return Self{
-            .allocator = null,
-            .str = s,
-            .entry_type_mapping = entry_types,
-            .pattern_mapping = patterns,
+            .allocator = alloc,
+            .copied_str = null,
+            .entry_type_mapping = entry_types.unmanaged,
+            .pattern_mapping = patterns.unmanaged,
             .ln_target = ln_target,
         };
     }
@@ -113,12 +115,12 @@ pub const LsColors = struct {
     /// Frees all memory allocated when initializing this struct
     pub fn deinit(self: *Self) void {
         // Will only be freed when the string was copied
-        if (self.allocator) |alloc| {
-            alloc.free(self.str);
+        if (self.copied_str) |str| {
+            self.allocator.free(str);
         }
 
-        self.entry_type_mapping.deinit();
-        self.pattern_mapping.deinit();
+        self.entry_type_mapping.deinit(self.allocator);
+        self.pattern_mapping.deinit(self.allocator);
     }
 
     pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
