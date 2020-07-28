@@ -5,9 +5,11 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-const EntryType = @import("entrytypes.zig").EntryType;
-const style = @import("style.zig");
+const style = @import("zig-ansi-term/src/style.zig");
 const Style = style.Style;
+const parseStyle = @import("zig-ansi-term/src/parse_style.zig").parseStyle;
+
+const EntryType = @import("entrytypes.zig").EntryType;
 const styled_path = @import("styled_path.zig");
 const StyledPath = styled_path.StyledPath;
 const StyledPathComponents = styled_path.StyledPathComponents;
@@ -76,7 +78,7 @@ pub const LsColors = struct {
 
                     if (std.mem.eql(u8, "ln", pattern) and std.mem.eql(u8, "target", sty)) {
                         ln_target = true;
-                    } else if (Style.fromAnsiSequence(sty)) |style_parsed| {
+                    } else if (parseStyle(sty)) |style_parsed| {
                         if (EntryType.fromStr(pattern)) |entry_type| {
                             _ = try entry_types.put(entry_type, style_parsed);
                         } else {

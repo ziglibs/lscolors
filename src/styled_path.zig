@@ -1,12 +1,13 @@
 const std = @import("std");
 const testing = std.testing;
 
-const LsColors = @import("main.zig").LsColors;
-const style = @import("style.zig");
+const style = @import("zig-ansi-term/src/style.zig");
 const Style = style.Style;
 const FontStyle = style.FontStyle;
 const Color = style.Color;
-const ansi = @import("ansi.zig");
+const ansi_format = @import("zig-ansi-term/src/format.zig");
+
+const LsColors = @import("main.zig").LsColors;
 const PathComponentIterator = @import("path_components.zig").PathComponentIterator;
 
 pub const StyledPath = struct {
@@ -22,8 +23,8 @@ pub const StyledPath = struct {
         writer: anytype,
     ) @TypeOf(writer).Error!void {
         const sty = value.style;
-        const prefix = ansi.Prefix{ .sty = sty };
-        const postfix = ansi.Postfix{ .sty = sty };
+        const prefix = ansi_format.Prefix{ .sty = sty };
+        const postfix = ansi_format.Postfix{ .sty = sty };
 
         return std.fmt.format(writer, "{}{}{}", .{ prefix, value.path, postfix });
     }
@@ -50,10 +51,10 @@ pub const StyledPathComponents = struct {
 
             if (!old_sty.eql(current_sty)) {
                 // Emit postfix of previous style
-                const postfix = ansi.Postfix{ .sty = old_sty };
+                const postfix = ansi_format.Postfix{ .sty = old_sty };
 
                 // Emit prefix of current style
-                const prefix = ansi.Prefix{ .sty = current_sty };
+                const prefix = ansi_format.Prefix{ .sty = current_sty };
 
                 try std.fmt.format(writer, "{}{}", .{ postfix, prefix });
             }
@@ -62,7 +63,7 @@ pub const StyledPathComponents = struct {
             try std.fmt.format(writer, "{}", .{component.name});
         }
 
-        const postfix = ansi.Postfix{ .sty = current_sty };
+        const postfix = ansi_format.Postfix{ .sty = current_sty };
         try std.fmt.format(writer, "{}", .{postfix});
     }
 };
