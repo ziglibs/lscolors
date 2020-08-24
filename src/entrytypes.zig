@@ -79,6 +79,8 @@ pub const EntryType = enum {
 
     const Self = @This();
 
+    pub const len = std.meta.fields(Self).len;
+
     const str_type_map = ComptimeStringMap(Self, .{
         .{ "no", .Normal },
         .{ "fi", .RegularFile },
