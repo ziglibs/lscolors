@@ -23,10 +23,10 @@ pub const StyledPath = struct {
         writer: anytype,
     ) @TypeOf(writer).Error!void {
         const sty = value.style;
-        const prefix = ansi_format.Prefix{ .sty = sty };
-        const postfix = ansi_format.Postfix{ .sty = sty };
 
-        return std.fmt.format(writer, "{}{}{}", .{ prefix, value.path, postfix });
+        try ansi_format.updateStyle(writer, sty, Style{});
+        try writer.writeAll(value.path);
+        try ansi_format.updateStyle(writer, Style{}, sty);
     }
 };
 
@@ -43,35 +43,27 @@ pub const StyledPathComponents = struct {
         writer: anytype,
     ) @TypeOf(writer).Error!void {
         var iter = PathComponentIterator.init(value.path);
-        var current_sty = Style.default;
+        var current_style: ?Style = Style{};
 
         while (iter.next()) |component| {
-            const old_sty = current_sty;
-            current_sty = value.lsc.styleForPath(component.path) catch Style.default;
+            const new_style = value.lsc.styleForPath(component.path) catch Style{};
+            defer current_style = new_style;
 
-            if (!old_sty.eql(current_sty)) {
-                // Emit postfix of previous style
-                const postfix = ansi_format.Postfix{ .sty = old_sty };
-
-                // Emit prefix of current style
-                const prefix = ansi_format.Prefix{ .sty = current_sty };
-
-                try std.fmt.format(writer, "{}{}", .{ postfix, prefix });
-            }
+            // Update style
+            try ansi_format.updateStyle(writer, new_style, current_style);
 
             // Actual item name
-            try std.fmt.format(writer, "{}", .{component.name});
+            try writer.writeAll(component.name);
         }
 
-        const postfix = ansi_format.Postfix{ .sty = current_sty };
-        try std.fmt.format(writer, "{}", .{postfix});
+        try ansi_format.updateStyle(writer, Style{}, current_style);
     }
 };
 
 test "format default styled path" {
     const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
-        .style = Style.default,
+        .style = Style{},
     };
 
     const allocator = std.testing.allocator;
@@ -87,8 +79,6 @@ test "format bold path" {
     const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
         .style = Style{
-            .foreground = null,
-            .background = null,
             .font_style = FontStyle.bold,
         },
     };
@@ -106,12 +96,9 @@ test "format bold and italic path" {
     const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
         .style = Style{
-            .foreground = null,
-            .background = null,
             .font_style = FontStyle{
                 .bold = true,
                 .italic = true,
-                .underline = false,
             },
         },
     };
@@ -130,8 +117,6 @@ test "format colored path" {
         .path = "/usr/local/bin/zig",
         .style = Style{
             .foreground = Color.Red,
-            .background = null,
-            .font_style = FontStyle.default,
         },
     };
 

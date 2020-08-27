@@ -157,7 +157,7 @@ pub const LsColors = struct {
                 }
             }
 
-            return if (style_for_type) |sty| sty else Style.default;
+            return if (style_for_type) |sty| sty else Style{};
         }
 
         return error.TooManySymlinks;
@@ -205,8 +205,6 @@ test "parse geoff.greer.fm default lscolors" {
 
     const expected = Style{
         .foreground = .Blue,
-        .background = null,
-        .font_style = style.FontStyle.default,
     };
     expectEqual(lsc.entry_type_mapping[@enumToInt(EntryType.Directory)].?, expected);
 }
@@ -217,8 +215,8 @@ test "get style of cwd from empty" {
     var lsc = try LsColors.parseStr(allocator, "");
     defer lsc.deinit();
 
-    expectEqual(Style.default, try lsc.styleForPath("."));
-    expectEqual(Style.default, try lsc.styleForPath(".."));
+    expectEqual(Style{}, try lsc.styleForPath("."));
+    expectEqual(Style{}, try lsc.styleForPath(".."));
 }
 
 test "get style of cwd from geoff.greer.fm" {
@@ -229,8 +227,6 @@ test "get style of cwd from geoff.greer.fm" {
 
     const expected = Style{
         .foreground = .Blue,
-        .background = null,
-        .font_style = style.FontStyle.default,
     };
     expectEqual(expected, try lsc.styleForPath("."));
     expectEqual(expected, try lsc.styleForPath(".."));
