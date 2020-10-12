@@ -1,4 +1,4 @@
-# zig-lscolors
+# lscolors
 
 ![CI](https://github.com/ziglibs/zig-lscolors/workflows/CI/badge.svg)
 
