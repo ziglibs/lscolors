@@ -1,3 +1,0 @@
-[submodule "src/zig-ansi-term"]
-	path = src/zig-ansi-term
-	url = https://github.com/ziglibs/zig-ansi-term
