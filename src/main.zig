@@ -5,9 +5,9 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-const style = @import("zig-ansi-term/src/style.zig");
+const style = @import("ansi-term/src/style.zig");
 const Style = style.Style;
-const parseStyle = @import("zig-ansi-term/src/parse_style.zig").parseStyle;
+const parseStyle = @import("ansi-term/src/parse_style.zig").parseStyle;
 
 const EntryType = @import("entrytypes.zig").EntryType;
 const styled_path = @import("styled_path.zig");

@@ -1,11 +1,11 @@
 const std = @import("std");
 const testing = std.testing;
 
-const style = @import("zig-ansi-term/src/style.zig");
+const style = @import("ansi-term/src/style.zig");
 const Style = style.Style;
 const FontStyle = style.FontStyle;
 const Color = style.Color;
-const ansi_format = @import("zig-ansi-term/src/format.zig");
+const ansi_format = @import("ansi-term/src/format.zig");
 
 const LsColors = @import("main.zig").LsColors;
 const PathComponentIterator = @import("path_components.zig").PathComponentIterator;
