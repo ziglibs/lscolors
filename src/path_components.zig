@@ -53,24 +53,24 @@ test "path components in absolute path" {
     var result: PathComponent = undefined;
 
     result = iter.next().?;
-    expectEqualSlices(u8, "/", result.path);
-    expectEqualSlices(u8, "/", result.name);
+    try expectEqualSlices(u8, "/", result.path);
+    try expectEqualSlices(u8, "/", result.name);
 
     result = iter.next().?;
-    expectEqualSlices(u8, "/usr/", result.path);
-    expectEqualSlices(u8, "usr/", result.name);
+    try expectEqualSlices(u8, "/usr/", result.path);
+    try expectEqualSlices(u8, "usr/", result.name);
 
     result = iter.next().?;
-    expectEqualSlices(u8, "/usr/local/", result.path);
-    expectEqualSlices(u8, "local/", result.name);
+    try expectEqualSlices(u8, "/usr/local/", result.path);
+    try expectEqualSlices(u8, "local/", result.name);
 
     result = iter.next().?;
-    expectEqualSlices(u8, "/usr/local/bin/", result.path);
-    expectEqualSlices(u8, "bin/", result.name);
+    try expectEqualSlices(u8, "/usr/local/bin/", result.path);
+    try expectEqualSlices(u8, "bin/", result.name);
 
     result = iter.next().?;
-    expectEqualSlices(u8, "/usr/local/bin/zig", result.path);
-    expectEqualSlices(u8, "zig", result.name);
+    try expectEqualSlices(u8, "/usr/local/bin/zig", result.path);
+    try expectEqualSlices(u8, "zig", result.name);
 
-    expectEqual(@as(?PathComponent, null), iter.next());
+    try expectEqual(@as(?PathComponent, null), iter.next());
 }

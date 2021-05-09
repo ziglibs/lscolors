@@ -161,18 +161,18 @@ pub const EntryType = enum {
 };
 
 test "parse entry types" {
-    expectEqual(EntryType.fromStr(""), null);
+    try expectEqual(EntryType.fromStr(""), null);
 }
 
 test "entry type of . and .." {
-    expectEqual(EntryType.fromPath("."), .Directory);
-    expectEqual(EntryType.fromPath(".."), .Directory);
+    try expectEqual(EntryType.fromPath("."), .Directory);
+    try expectEqual(EntryType.fromPath(".."), .Directory);
 }
 
 test "entry type of /dev/null" {
-    expectEqual(EntryType.fromPath("/dev/null"), .CharacterDevice);
+    try expectEqual(EntryType.fromPath("/dev/null"), .CharacterDevice);
 }
 
 test "entry type of /bin/sh" {
-    expectEqual(EntryType.fromPath("/bin/sh"), .ExecutableFile);
+    try expectEqual(EntryType.fromPath("/bin/sh"), .ExecutableFile);
 }

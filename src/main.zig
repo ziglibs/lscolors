@@ -28,10 +28,10 @@ fn pathMatchesPattern(path: []const u8, pattern: []const u8) bool {
 }
 
 test "path matches pattern" {
-    expect(pathMatchesPattern("README", "README"));
-    expect(!pathMatchesPattern("README", "main.zig"));
-    expect(pathMatchesPattern("README.md", "*.md"));
-    expect(!pathMatchesPattern("README", "*.zig"));
+    try expect(pathMatchesPattern("README", "README"));
+    try expect(!pathMatchesPattern("README", "main.zig"));
+    try expect(pathMatchesPattern("README.md", "*.md"));
+    try expect(!pathMatchesPattern("README", "*.zig"));
 }
 
 pub const LsColors = struct {
@@ -206,7 +206,7 @@ test "parse geoff.greer.fm default lscolors" {
     const expected = Style{
         .foreground = .Blue,
     };
-    expectEqual(lsc.entry_type_mapping[@enumToInt(EntryType.Directory)].?, expected);
+    try expectEqual(lsc.entry_type_mapping[@enumToInt(EntryType.Directory)].?, expected);
 }
 
 test "get style of cwd from empty" {
@@ -215,8 +215,8 @@ test "get style of cwd from empty" {
     var lsc = try LsColors.parseStr(allocator, "");
     defer lsc.deinit();
 
-    expectEqual(Style{}, try lsc.styleForPath("."));
-    expectEqual(Style{}, try lsc.styleForPath(".."));
+    try expectEqual(Style{}, try lsc.styleForPath("."));
+    try expectEqual(Style{}, try lsc.styleForPath(".."));
 }
 
 test "get style of cwd from geoff.greer.fm" {
@@ -228,8 +228,8 @@ test "get style of cwd from geoff.greer.fm" {
     const expected = Style{
         .foreground = .Blue,
     };
-    expectEqual(expected, try lsc.styleForPath("."));
-    expectEqual(expected, try lsc.styleForPath(".."));
+    try expectEqual(expected, try lsc.styleForPath("."));
+    try expectEqual(expected, try lsc.styleForPath(".."));
 }
 
 test "get styled string from default" {
@@ -242,7 +242,7 @@ test "get styled string from default" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{try lsc.styled(".")});
     defer allocator.free(actual);
 
-    expectEqualSlices(u8, expected, actual);
+    try expectEqualSlices(u8, expected, actual);
 }
 
 test "get styled path components from default" {
@@ -255,7 +255,7 @@ test "get styled path components from default" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents(".")});
     defer allocator.free(actual);
 
-    expectEqualSlices(u8, expected, actual);
+    try expectEqualSlices(u8, expected, actual);
 }
 
 test "get styled path components from default" {
@@ -268,5 +268,5 @@ test "get styled path components from default" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents("./main.zig")});
     defer allocator.free(actual);
 
-    expectEqualSlices(u8, expected, actual);
+    try expectEqualSlices(u8, expected, actual);
 }

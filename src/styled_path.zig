@@ -72,7 +72,7 @@ test "format default styled path" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
     defer allocator.free(actual);
 
-    testing.expectEqualSlices(u8, expected, actual);
+    try testing.expectEqualSlices(u8, expected, actual);
 }
 
 test "format bold path" {
@@ -89,7 +89,7 @@ test "format bold path" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
     defer allocator.free(actual);
 
-    testing.expectEqualSlices(u8, expected, actual);
+    try testing.expectEqualSlices(u8, expected, actual);
 }
 
 test "format bold and italic path" {
@@ -109,7 +109,7 @@ test "format bold and italic path" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
     defer allocator.free(actual);
 
-    testing.expectEqualSlices(u8, expected, actual);
+    try testing.expectEqualSlices(u8, expected, actual);
 }
 
 test "format colored path" {
@@ -126,5 +126,5 @@ test "format colored path" {
     const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
     defer allocator.free(actual);
 
-    testing.expectEqualSlices(u8, expected, actual);
+    try testing.expectEqualSlices(u8, expected, actual);
 }
