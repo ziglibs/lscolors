@@ -17,8 +17,11 @@ const StyledPathComponents = styled_path.StyledPathComponents;
 const ls_colors_default = "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:";
 
 const EntryTypeMap = [EntryType.len]?Style;
-const PatternMap = std.StringArrayHashMap(Style);
-const PatternMapUnmanaged = std.StringArrayHashMapUnmanaged(Style);
+
+const PatternStyle = struct {
+    pattern: []const u8,
+    style: Style,
+};
 
 fn pathMatchesPattern(path: []const u8, pattern: []const u8) bool {
     if (path.len < 1) return false;
@@ -38,18 +41,18 @@ pub const LsColors = struct {
     allocator: *Allocator,
     copied_str: ?[]const u8,
     entry_type_mapping: EntryTypeMap,
-    pattern_mapping: PatternMapUnmanaged,
+    pattern_mapping: std.ArrayListUnmanaged(PatternStyle),
     ln_target: bool,
 
     const Self = @This();
 
     /// Parses a LSCOLORS string
     /// Does not take ownership of the string, copies it instead
-    pub fn parseStr(alloc: *Allocator, s: []const u8) !Self {
-        const str_copy = try alloc.dupe(u8, s);
-        errdefer alloc.free(str_copy);
+    pub fn parseStr(allocator: *Allocator, s: []const u8) !Self {
+        const str_copy = try allocator.dupe(u8, s);
+        errdefer allocator.free(str_copy);
 
-        var result = try Self.parseStrOwned(alloc, str_copy);
+        var result = try Self.parseStrOwned(allocator, str_copy);
         result.copied_str = str_copy;
 
         return result;
@@ -57,11 +60,11 @@ pub const LsColors = struct {
 
     /// Parses a LSCOLORS string
     /// Takes ownership of the string
-    pub fn parseStrOwned(alloc: *Allocator, s: []const u8) !Self {
+    pub fn parseStrOwned(allocator: *Allocator, s: []const u8) !Self {
         var entry_types = [_]?Style{null} ** EntryType.len;
 
-        var patterns = PatternMap.init(alloc);
-        errdefer patterns.deinit();
+        var patterns: std.ArrayListUnmanaged(PatternStyle) = .{};
+        errdefer patterns.deinit(allocator);
 
         var ln_target = false;
 
@@ -80,7 +83,10 @@ pub const LsColors = struct {
                         if (EntryType.fromStr(pattern)) |entry_type| {
                             entry_types[@enumToInt(entry_type)] = style_parsed;
                         } else {
-                            _ = try patterns.put(pattern, style_parsed);
+                            try patterns.append(allocator, .{
+                                .pattern = pattern,
+                                .style = style_parsed,
+                            });
                         }
                     }
                 }
@@ -88,10 +94,10 @@ pub const LsColors = struct {
         }
 
         return Self{
-            .allocator = alloc,
+            .allocator = allocator,
             .copied_str = null,
             .entry_type_mapping = entry_types,
-            .pattern_mapping = patterns.unmanaged,
+            .pattern_mapping = patterns,
             .ln_target = ln_target,
         };
     }
@@ -148,12 +154,9 @@ pub const LsColors = struct {
                 }
             }
 
-            for (self.pattern_mapping.items()) |entry| {
-                const pattern = entry.key;
-                const sty = entry.value;
-
-                if (pathMatchesPattern(path, pattern)) {
-                    return sty;
+            for (self.pattern_mapping.items) |entry| {
+                if (pathMatchesPattern(path, entry.pattern)) {
+                    return entry.style;
                 }
             }
 
