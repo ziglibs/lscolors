@@ -22,6 +22,9 @@ pub const StyledPath = struct {
         options: std.fmt.FormatOptions,
         writer: anytype,
     ) @TypeOf(writer).Error!void {
+        _ = fmt;
+        _ = options;
+
         const sty = value.style;
 
         try ansi_format.updateStyle(writer, sty, Style{});
@@ -42,6 +45,9 @@ pub const StyledPathComponents = struct {
         options: std.fmt.FormatOptions,
         writer: anytype,
     ) @TypeOf(writer).Error!void {
+        _ = fmt;
+        _ = options;
+
         var iter = PathComponentIterator.init(value.path);
         var current_style: ?Style = Style{};
 
