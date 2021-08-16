@@ -68,9 +68,9 @@ pub const LsColors = struct {
 
         var ln_target = false;
 
-        var rules_iter = std.mem.split(s, ":");
+        var rules_iter = std.mem.split(u8, s, ":");
         while (rules_iter.next()) |rule| {
-            var iter = std.mem.split(rule, "=");
+            var iter = std.mem.split(u8, rule, "=");
 
             if (iter.next()) |pattern| {
                 if (iter.next()) |sty| {
