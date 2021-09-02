@@ -120,33 +120,33 @@ pub const EntryType = enum {
 
         const mode = @intCast(u32, try file.mode());
 
-        if (os.S_ISBLK(mode)) {
+        if (os.S.ISBLK(mode)) {
             return EntryType.BlockDevice;
-        } else if (os.S_ISCHR(mode)) {
+        } else if (os.S.ISCHR(mode)) {
             return EntryType.CharacterDevice;
-        } else if (os.S_ISDIR(mode)) {
+        } else if (os.S.ISDIR(mode)) {
             return EntryType.Directory;
-        } else if (os.S_ISFIFO(mode)) {
+        } else if (os.S.ISFIFO(mode)) {
             return EntryType.FIFO;
-        } else if (os.S_ISSOCK(mode)) {
+        } else if (os.S.ISSOCK(mode)) {
             return EntryType.Socket;
-        } else if (mode & os.S_ISUID != 0) {
+        } else if (mode & os.S.ISUID != 0) {
             return EntryType.Setuid;
-        } else if (mode & os.S_ISGID != 0) {
+        } else if (mode & os.S.ISGID != 0) {
             return EntryType.Setgid;
-        } else if (mode & os.S_ISVTX != 0) {
+        } else if (mode & os.S.ISVTX != 0) {
             return EntryType.Sticky;
-        } else if (os.S_ISREG(mode)) {
-            if (mode & os.S_IXUSR != 0) {
+        } else if (os.S.ISREG(mode)) {
+            if (mode & os.S.IXUSR != 0) {
                 return EntryType.ExecutableFile;
-            } else if (mode & os.S_IXGRP != 0) {
+            } else if (mode & os.S.IXGRP != 0) {
                 return EntryType.ExecutableFile;
-            } else if (mode & os.S_IXOTH != 0) {
+            } else if (mode & os.S.IXOTH != 0) {
                 return EntryType.ExecutableFile;
             }
 
             return EntryType.RegularFile;
-        } else if (os.S_ISLNK(mode)) {
+        } else if (os.S.ISLNK(mode)) {
             var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
             const target = try os.readlink(path, &path_buf);
 

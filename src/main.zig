@@ -9,7 +9,7 @@ const style = @import("ansi-term/src/style.zig");
 const Style = style.Style;
 const parseStyle = @import("ansi-term/src/parse_style.zig").parseStyle;
 
-const EntryType = @import("entrytypes.zig").EntryType;
+const EntryType = @import("entry_types.zig").EntryType;
 const styled_path = @import("styled_path.zig");
 const StyledPath = styled_path.StyledPath;
 const StyledPathComponents = styled_path.StyledPathComponents;
