@@ -38,7 +38,7 @@ test "path matches pattern" {
 }
 
 pub const LsColors = struct {
-    allocator: *Allocator,
+    allocator: Allocator,
     copied_str: ?[]const u8,
     entry_type_mapping: EntryTypeMap,
     pattern_mapping: std.ArrayListUnmanaged(PatternStyle),
@@ -48,7 +48,7 @@ pub const LsColors = struct {
 
     /// Parses a LSCOLORS string
     /// Does not take ownership of the string, copies it instead
-    pub fn parseStr(allocator: *Allocator, s: []const u8) !Self {
+    pub fn parseStr(allocator: Allocator, s: []const u8) !Self {
         const str_copy = try allocator.dupe(u8, s);
         errdefer allocator.free(str_copy);
 
@@ -60,7 +60,7 @@ pub const LsColors = struct {
 
     /// Parses a LSCOLORS string
     /// Takes ownership of the string
-    pub fn parseStrOwned(allocator: *Allocator, s: []const u8) !Self {
+    pub fn parseStrOwned(allocator: Allocator, s: []const u8) !Self {
         var entry_types = [_]?Style{null} ** EntryType.len;
 
         var patterns: std.ArrayListUnmanaged(PatternStyle) = .{};
@@ -103,14 +103,14 @@ pub const LsColors = struct {
     }
 
     /// Parses a default set of LSCOLORS rules
-    pub fn default(alloc: *Allocator) !Self {
+    pub fn default(alloc: Allocator) !Self {
         return Self.parseStr(alloc, ls_colors_default);
     }
 
     /// Parses the current environment variable `LSCOLORS`
     /// If the environment variable does not exist, falls back
     /// to the default set of LSCOLORS rules
-    pub fn fromEnv(alloc: *Allocator) !Self {
+    pub fn fromEnv(alloc: Allocator) !Self {
         if (std.os.getenv("LSCOLORS")) |env| {
             return Self.parseStr(alloc, env);
         } else {
