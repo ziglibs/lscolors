@@ -5,9 +5,8 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-const style = @import("ansi-term/src/style.zig");
-const Style = style.Style;
-const parseStyle = @import("ansi-term/src/parse_style.zig").parseStyle;
+const ansi_term = @import("ansi-term/src/main.zig");
+const Style = ansi_term.style.Style;
 
 const EntryType = @import("entry_types.zig").EntryType;
 const styled_path = @import("styled_path.zig");
@@ -79,7 +78,7 @@ pub const LsColors = struct {
 
                     if (std.mem.eql(u8, "ln", pattern) and std.mem.eql(u8, "target", sty)) {
                         ln_target = true;
-                    } else if (parseStyle(sty)) |style_parsed| {
+                    } else if (Style.parse(sty)) |style_parsed| {
                         if (EntryType.fromStr(pattern)) |entry_type| {
                             entry_types[@enumToInt(entry_type)] = style_parsed;
                         } else {
