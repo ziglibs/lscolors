@@ -1,16 +1,20 @@
 const std = @import("std");
 
-const LsColors = @import("src/main.zig").LsColors;
+const LsColors = @import("lscolors").LsColors;
 
 pub fn main() !void {
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
     var lsc = try LsColors.fromEnv(allocator);
     defer lsc.deinit();
 
-    const dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
-    var iterator = dir.iterate();
+    var dir = try std.fs.cwd().openIterableDir(".", .{});
+    defer dir.close();
 
+    var iterator = dir.iterate();
     while (try iterator.next()) |itm| {
-        std.debug.warn("{}\n", .{lsc.styled(itm.name)});
+        std.log.info("{}", .{try lsc.styled(itm.name)});
     }
 }
