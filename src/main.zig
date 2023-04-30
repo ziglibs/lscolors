@@ -5,7 +5,7 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-const ansi_term = @import("ansi-term/src/main.zig");
+const ansi_term = @import("ansi-term");
 const Style = ansi_term.style.Style;
 
 const EntryType = @import("entry_types.zig").EntryType;

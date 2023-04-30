@@ -4,8 +4,13 @@ pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const ansi_term = b.dependency("ansi-term", .{}).module("ansi-term");
+
     const module = b.addModule("lscolors", .{
         .source_file = .{ .path = "src/main.zig" },
+        .dependencies = &.{
+            .{ .name = "ansi-term", .module = ansi_term },
+        },
     });
 
     const main_tests = b.addTest(.{
@@ -14,6 +19,7 @@ pub fn build(b: *Builder) void {
         .target = target,
         .optimize = optimize,
     });
+    main_tests.addModule("ansi-term", ansi_term);
 
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&main_tests.step);
@@ -26,7 +32,7 @@ pub fn build(b: *Builder) void {
     });
     exe.addModule("lscolors", module);
 
-    const run_cmd = exe.run();
+    const run_cmd = b.addRunArtifact(exe);
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
