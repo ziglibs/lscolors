@@ -247,7 +247,7 @@ test "get styled string from default" {
     try expectEqualSlices(u8, expected, actual);
 }
 
-test "get styled path components from default" {
+test "get styled path components from default (directory)" {
     const allocator = std.testing.allocator;
 
     var lsc = try LsColors.default(allocator);
@@ -260,7 +260,7 @@ test "get styled path components from default" {
     try expectEqualSlices(u8, expected, actual);
 }
 
-test "get styled path components from default" {
+test "get styled path components from default (file)" {
     const allocator = std.testing.allocator;
 
     var lsc = try LsColors.default(allocator);
