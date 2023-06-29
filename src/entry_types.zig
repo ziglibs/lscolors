@@ -118,7 +118,7 @@ pub const EntryType = enum {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        const mode = @intCast(u32, try file.mode());
+        const mode = @as(u32, @intCast(try file.mode()));
 
         if (os.S.ISBLK(mode)) {
             return EntryType.BlockDevice;

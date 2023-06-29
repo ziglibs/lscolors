@@ -80,7 +80,7 @@ pub const LsColors = struct {
                         ln_target = true;
                     } else if (Style.parse(sty)) |style_parsed| {
                         if (EntryType.fromStr(pattern)) |entry_type| {
-                            entry_types[@enumToInt(entry_type)] = style_parsed;
+                            entry_types[@intFromEnum(entry_type)] = style_parsed;
                         } else {
                             try patterns.append(allocator, .{
                                 .pattern = pattern,
@@ -140,7 +140,7 @@ pub const LsColors = struct {
 
         while (i < max_link_depth) : (i += 1) {
             const entry_type = try EntryType.fromPath(path);
-            const style_for_type = self.entry_type_mapping[@enumToInt(entry_type)];
+            const style_for_type = self.entry_type_mapping[@intFromEnum(entry_type)];
 
             if (style_for_type) |sty| {
                 if (entry_type == .SymbolicLink and self.ln_target) {
@@ -208,7 +208,7 @@ test "parse geoff.greer.fm default lscolors" {
     const expected = Style{
         .foreground = .Blue,
     };
-    try expectEqual(lsc.entry_type_mapping[@enumToInt(EntryType.Directory)].?, expected);
+    try expectEqual(lsc.entry_type_mapping[@intFromEnum(EntryType.Directory)].?, expected);
 }
 
 test "get style of cwd from empty" {
