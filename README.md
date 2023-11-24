@@ -3,7 +3,7 @@
 ![CI](https://github.com/ziglibs/zig-lscolors/workflows/CI/badge.svg)
 
 A zig library for colorizing paths according to the `LS_COLORS`
-environment variable.
+environment variable. Designed to work with Zig 0.11.0.
 
 ## Quick Example
 
