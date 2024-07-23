@@ -1,4 +1,6 @@
 const std = @import("std");
+const builtin = @import("builtin");
+
 const os = std.os;
 const StaticStringMap = std.StaticStringMap;
 const File = std.fs.File;
@@ -112,9 +114,7 @@ pub const EntryType = enum {
         return str_type_map.get(entry_type);
     }
 
-    /// Get the entry type for this path
-    /// Does not take ownership of the path
-    pub fn fromPath(path: []const u8) !Self {
+    fn fromPathLinux(path: []const u8) !Self {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
@@ -156,6 +156,15 @@ pub const EntryType = enum {
             return EntryType.SymbolicLink;
         } else {
             return EntryType.Normal;
+        }
+    }
+
+    /// Get the entry type for this path
+    /// Does not take ownership of the path
+    pub fn fromPath(path: []const u8) !Self {
+        switch (builtin.os.tag) {
+            .linux => return try Self.fromPathLinux(path),
+            else => return EntryType.Normal,
         }
     }
 };
