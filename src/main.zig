@@ -45,7 +45,7 @@ pub const LsColors = struct {
 
     const Self = @This();
 
-    /// Parses a LSCOLORS string
+    /// Parses a LS_COLORS string
     /// Does not take ownership of the string, copies it instead
     pub fn parseStr(allocator: Allocator, s: []const u8) !Self {
         const str_copy = try allocator.dupe(u8, s);
@@ -57,7 +57,7 @@ pub const LsColors = struct {
         return result;
     }
 
-    /// Parses a LSCOLORS string
+    /// Parses a LS_COLORS string
     /// Takes ownership of the string
     pub fn parseStrOwned(allocator: Allocator, s: []const u8) !Self {
         var entry_types = [_]?Style{null} ** EntryType.len;
@@ -101,16 +101,16 @@ pub const LsColors = struct {
         };
     }
 
-    /// Parses a default set of LSCOLORS rules
+    /// Parses a default set of LS_COLORS rules
     pub fn default(alloc: Allocator) !Self {
         return Self.parseStr(alloc, ls_colors_default);
     }
 
-    /// Parses the current environment variable `LSCOLORS`
+    /// Parses the current environment variable `LS_COLORS`
     /// If the environment variable does not exist, falls back
-    /// to the default set of LSCOLORS rules
+    /// to the default set of LS_COLORS rules
     pub fn fromEnv(alloc: Allocator) !Self {
-        if (std.process.getEnvVarOwned(alloc, "LSCOLORS")) |env| {
+        if (std.process.getEnvVarOwned(alloc, "LS_COLORS")) |env| {
             return Self.parseStr(alloc, env);
         } else |_| {
             return Self.default(alloc);
