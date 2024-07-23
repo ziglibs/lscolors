@@ -10,7 +10,7 @@ pub fn main() !void {
     var lsc = try LsColors.fromEnv(allocator);
     defer lsc.deinit();
 
-    var dir = try std.fs.cwd().openIterableDir(".", .{});
+    var dir = try std.fs.cwd().openDir(".", .{.iterate = true});
     defer dir.close();
 
     var iterator = dir.iterate();

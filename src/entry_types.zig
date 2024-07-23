@@ -1,6 +1,6 @@
 const std = @import("std");
 const os = std.os;
-const ComptimeStringMap = std.ComptimeStringMap;
+const StaticStringMap = std.StaticStringMap;
 const File = std.fs.File;
 const expectEqual = std.testing.expectEqual;
 
@@ -81,7 +81,7 @@ pub const EntryType = enum {
 
     pub const len = std.meta.fields(Self).len;
 
-    const str_type_map = ComptimeStringMap(Self, .{
+    const str_type_map = StaticStringMap(Self).initComptime(.{
         .{ "no", .Normal },
         .{ "fi", .RegularFile },
         .{ "di", .Directory },
@@ -120,35 +120,35 @@ pub const EntryType = enum {
 
         const mode = @as(u32, @intCast(try file.mode()));
 
-        if (os.S.ISBLK(mode)) {
+        if (os.linux.S.ISBLK(mode)) {
             return EntryType.BlockDevice;
-        } else if (os.S.ISCHR(mode)) {
+        } else if (os.linux.S.ISCHR(mode)) {
             return EntryType.CharacterDevice;
-        } else if (os.S.ISDIR(mode)) {
+        } else if (os.linux.S.ISDIR(mode)) {
             return EntryType.Directory;
-        } else if (os.S.ISFIFO(mode)) {
+        } else if (os.linux.S.ISFIFO(mode)) {
             return EntryType.FIFO;
-        } else if (os.S.ISSOCK(mode)) {
+        } else if (os.linux.S.ISSOCK(mode)) {
             return EntryType.Socket;
-        } else if (mode & os.S.ISUID != 0) {
+        } else if (mode & os.linux.S.ISUID != 0) {
             return EntryType.Setuid;
-        } else if (mode & os.S.ISGID != 0) {
+        } else if (mode & os.linux.S.ISGID != 0) {
             return EntryType.Setgid;
-        } else if (mode & os.S.ISVTX != 0) {
+        } else if (mode & os.linux.S.ISVTX != 0) {
             return EntryType.Sticky;
-        } else if (os.S.ISREG(mode)) {
-            if (mode & os.S.IXUSR != 0) {
+        } else if (os.linux.S.ISREG(mode)) {
+            if (mode & os.linux.S.IXUSR != 0) {
                 return EntryType.ExecutableFile;
-            } else if (mode & os.S.IXGRP != 0) {
+            } else if (mode & os.linux.S.IXGRP != 0) {
                 return EntryType.ExecutableFile;
-            } else if (mode & os.S.IXOTH != 0) {
+            } else if (mode & os.linux.S.IXOTH != 0) {
                 return EntryType.ExecutableFile;
             }
 
             return EntryType.RegularFile;
-        } else if (os.S.ISLNK(mode)) {
+        } else if (os.linux.S.ISLNK(mode)) {
             var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
-            const target = try os.readlink(path, &path_buf);
+            const target = try std.fs.cwd().readLink(path, &path_buf);
 
             var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
             target_file.close();

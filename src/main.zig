@@ -110,9 +110,9 @@ pub const LsColors = struct {
     /// If the environment variable does not exist, falls back
     /// to the default set of LSCOLORS rules
     pub fn fromEnv(alloc: Allocator) !Self {
-        if (std.os.getenv("LSCOLORS")) |env| {
+        if (std.process.getEnvVarOwned(alloc, "LSCOLORS")) |env| {
             return Self.parseStr(alloc, env);
-        } else {
+        } else |_| {
             return Self.default(alloc);
         }
     }
@@ -127,7 +127,7 @@ pub const LsColors = struct {
         self.pattern_mapping.deinit(self.allocator);
     }
 
-    pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || os.ReadLinkError || std.fs.File.ModeError;
+    pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || std.fs.Dir.ReadLinkError || std.fs.File.ModeError;
 
     /// Queries the style for this particular path.
     /// Does not take ownership of the path. Requires no allocations.
@@ -144,7 +144,7 @@ pub const LsColors = struct {
 
             if (style_for_type) |sty| {
                 if (entry_type == .SymbolicLink and self.ln_target) {
-                    path = try os.readlink(path, &path_buf);
+                    path = try std.fs.cwd().readLink(path, &path_buf);
                     continue;
                 }
 
