@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 const os = std.os;
+const posix = std.posix;
 const StaticStringMap = std.StaticStringMap;
 const File = std.fs.File;
 const expectEqual = std.testing.expectEqual;
@@ -159,12 +160,61 @@ pub const EntryType = enum {
         }
     }
 
+    fn fromPathPosix(path: []const u8) !Self {
+        var file = try std.fs.cwd().openFile(path, .{});
+        defer file.close();
+
+        const mode = @as(u32, @intCast(try file.mode()));
+
+        if (posix.S.ISBLK(mode)) {
+            return EntryType.BlockDevice;
+        } else if (posix.S.ISCHR(mode)) {
+            return EntryType.CharacterDevice;
+        } else if (posix.S.ISDIR(mode)) {
+            return EntryType.Directory;
+        } else if (posix.S.ISFIFO(mode)) {
+            return EntryType.FIFO;
+        } else if (posix.S.ISSOCK(mode)) {
+            return EntryType.Socket;
+        } else if (mode & posix.S.ISUID != 0) {
+            return EntryType.Setuid;
+        } else if (mode & posix.S.ISGID != 0) {
+            return EntryType.Setgid;
+        } else if (mode & posix.S.ISVTX != 0) {
+            return EntryType.Sticky;
+        } else if (posix.S.ISREG(mode)) {
+            if (mode & posix.S.IXUSR != 0) {
+                return EntryType.ExecutableFile;
+            } else if (mode & posix.S.IXGRP != 0) {
+                return EntryType.ExecutableFile;
+            } else if (mode & posix.S.IXOTH != 0) {
+                return EntryType.ExecutableFile;
+            }
+
+            return EntryType.RegularFile;
+        } else if (posix.S.ISLNK(mode)) {
+            var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+            const target = try std.fs.cwd().readLink(path, &path_buf);
+
+            var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
+            target_file.close();
+
+            return EntryType.SymbolicLink;
+        } else {
+            return EntryType.Normal;
+        }
+    }
+
     /// Get the entry type for this path
     /// Does not take ownership of the path
     pub fn fromPath(path: []const u8) !Self {
         switch (builtin.os.tag) {
+            .windows => return EntryType.Normal, // unsupported platform
+            .wasi => return EntryType.Normal, // unsupported platform
+
             .linux => return try Self.fromPathLinux(path),
-            else => return EntryType.Normal,
+
+            else => return try Self.fromPathPosix(path),
         }
     }
 };
