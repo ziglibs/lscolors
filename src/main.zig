@@ -5,7 +5,7 @@ const expect = std.testing.expect;
 const expectEqual = std.testing.expectEqual;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-const ansi_term = @import("ansi-term");
+const ansi_term = @import("ansi_term");
 const Style = ansi_term.style.Style;
 
 const EntryType = @import("entry_types.zig").EntryType;
@@ -67,9 +67,9 @@ pub const LsColors = struct {
 
         var ln_target = false;
 
-        var rules_iter = std.mem.split(u8, s, ":");
+        var rules_iter = std.mem.splitSequence(u8, s, ":");
         while (rules_iter.next()) |rule| {
-            var iter = std.mem.split(u8, rule, "=");
+            var iter = std.mem.splitSequence(u8, rule, "=");
 
             if (iter.next()) |pattern| {
                 if (iter.next()) |sty| {
@@ -135,7 +135,7 @@ pub const LsColors = struct {
         const max_link_depth = 20;
         var i: usize = 0;
 
-        var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+        var path_buf: [std.fs.max_path_bytes]u8 = undefined;
         var path = initial_path;
 
         while (i < max_link_depth) : (i += 1) {

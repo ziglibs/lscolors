@@ -1,15 +1,21 @@
 .{
-    .name = "lscolors",
+    .name = .lscolors,
+    .fingerprint = 0x4c9ac217b91e4bee,
     .version = "0.1.0",
+
+    .minimum_zig_version = "0.14.0",
+
     .dependencies = .{
-        .@"ansi-term" = .{
-            .url = "https://github.com/ziglibs/ansi-term/archive/0bb62115db6749044765fdb37c9791388e7970f2.tar.gz",
-            .hash = "12200719196e0abd325efa248fb03882c8fa2c7130e3ae1d57dbff72afc846b28495",
+        .ansi_term = .{
+            .url = "git+https://github.com/ziglibs/ansi_term?ref=v0.1.0#d88bc63e91e2c1cd2e60aaf51196860375c78042",
+            .hash = "ansi_term-0.1.0-_baAy9djAABNQdiVAt7Iwk4wlBh2kL-UAxEDd3wDs-09",
         },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "src/",
+        "LICENSE",
+        "README.md",
     },
 }
