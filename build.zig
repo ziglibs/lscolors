@@ -4,22 +4,22 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const ansi_term = b.dependency("ansi-term", .{}).module("ansi-term");
+    const ansi_term = b.dependency("ansi_term", .{}).module("ansi_term");
 
     const module = b.addModule("lscolors", .{
         .root_source_file = b.path("src/main.zig"),
         .imports = &.{
-            .{ .name = "ansi-term", .module = ansi_term },
+            .{ .name = "ansi_term", .module = ansi_term },
         },
+        .target = target,
+        .optimize = optimize,
     });
 
     const main_tests = b.addTest(.{
         .name = "main test suite",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = module,
     });
-    main_tests.root_module.addImport("ansi-term", ansi_term);
+    main_tests.root_module.addImport("ansi_term", ansi_term);
 
     const run_main_tests = b.addRunArtifact(main_tests);
 
@@ -28,9 +28,7 @@ pub fn build(b: *Build) void {
 
     const exe = b.addExecutable(.{
         .name = "example",
-        .root_source_file = b.path("example.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = module,
     });
     exe.root_module.addImport("lscolors", module);
 

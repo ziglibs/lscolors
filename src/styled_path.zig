@@ -1,7 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 
-const ansi_term = @import("ansi-term");
+const ansi_term = @import("ansi_term");
 const style = ansi_term.style;
 const Style = style.Style;
 const FontStyle = style.FontStyle;
@@ -86,7 +86,7 @@ test "format bold path" {
     const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
         .style = Style{
-            .font_style = FontStyle.bold,
+            .font_style = .{ .bold = true },
         },
     };
 

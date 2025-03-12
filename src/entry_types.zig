@@ -148,7 +148,7 @@ pub const EntryType = enum {
 
             return EntryType.RegularFile;
         } else if (os.linux.S.ISLNK(mode)) {
-            var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+            var path_buf: [std.fs.max_path_bytes]u8 = undefined;
             const target = try std.fs.cwd().readLink(path, &path_buf);
 
             var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
@@ -193,7 +193,7 @@ pub const EntryType = enum {
 
             return EntryType.RegularFile;
         } else if (posix.S.ISLNK(mode)) {
-            var path_buf: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+            var path_buf: [std.fs.max_path_bytes]u8 = undefined;
             const target = try std.fs.cwd().readLink(path, &path_buf);
 
             var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
