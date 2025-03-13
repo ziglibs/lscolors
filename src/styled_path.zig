@@ -28,9 +28,9 @@ pub const StyledPath = struct {
 
         const sty = value.style;
 
-        try ansi_format.updateStyle(writer, sty, Style{});
+        try ansi_format.updateStyle(writer, sty, .{});
         try writer.writeAll(value.path);
-        try ansi_format.updateStyle(writer, Style{}, sty);
+        try ansi_format.updateStyle(writer, .{}, sty);
     }
 };
 
@@ -63,14 +63,14 @@ pub const StyledPathComponents = struct {
             try writer.writeAll(component.name);
         }
 
-        try ansi_format.updateStyle(writer, Style{}, current_style);
+        try ansi_format.updateStyle(writer, .{}, current_style);
     }
 };
 
 test "format default styled path" {
-    const styled_path = StyledPath{
+    const styled_path: StyledPath = .{
         .path = "/usr/local/bin/zig",
-        .style = Style{},
+        .style = .{},
     };
 
     const allocator = std.testing.allocator;
@@ -83,9 +83,9 @@ test "format default styled path" {
 }
 
 test "format bold path" {
-    const styled_path = StyledPath{
+    const styled_path: StyledPath = .{
         .path = "/usr/local/bin/zig",
-        .style = Style{
+        .style = .{
             .font_style = .{ .bold = true },
         },
     };
@@ -100,10 +100,10 @@ test "format bold path" {
 }
 
 test "format bold and italic path" {
-    const styled_path = StyledPath{
+    const styled_path: StyledPath = .{
         .path = "/usr/local/bin/zig",
-        .style = Style{
-            .font_style = FontStyle{
+        .style = .{
+            .font_style = .{
                 .bold = true,
                 .italic = true,
             },
@@ -122,8 +122,8 @@ test "format bold and italic path" {
 test "format colored path" {
     const styled_path = StyledPath{
         .path = "/usr/local/bin/zig",
-        .style = Style{
-            .foreground = Color.Red,
+        .style = .{
+            .foreground = .Red,
         },
     };
 

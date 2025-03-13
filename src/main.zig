@@ -62,7 +62,7 @@ pub const LsColors = struct {
     pub fn parseStrOwned(allocator: Allocator, s: []const u8) !Self {
         var entry_types = [_]?Style{null} ** EntryType.len;
 
-        var patterns: std.ArrayListUnmanaged(PatternStyle) = .{};
+        var patterns: std.ArrayListUnmanaged(PatternStyle) = .empty;
         errdefer patterns.deinit(allocator);
 
         var ln_target = false;
@@ -92,7 +92,7 @@ pub const LsColors = struct {
             }
         }
 
-        return Self{
+        return .{
             .allocator = allocator,
             .copied_str = null,
             .entry_type_mapping = entry_types,
@@ -168,7 +168,7 @@ pub const LsColors = struct {
     /// Creates a styled path struct for easy styled printing.
     /// Does not take ownership of the path. Requires no allocations.
     pub fn styled(self: Self, path: []const u8) StyleForPathError!StyledPath {
-        return StyledPath{
+        return .{
             .path = path,
             .style = try self.styleForPath(path),
         };
@@ -178,7 +178,7 @@ pub const LsColors = struct {
     /// nicely stylizes each component (directories and files) of the
     /// path with the respective style
     pub fn styledComponents(self: *Self, path: []const u8) StyledPathComponents {
-        return StyledPathComponents{
+        return .{
             .path = path,
             .lsc = self,
         };
@@ -205,7 +205,7 @@ test "parse geoff.greer.fm default lscolors" {
     var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
     defer lsc.deinit();
 
-    const expected = Style{
+    const expected: Style = .{
         .foreground = .Blue,
     };
     try expectEqual(lsc.entry_type_mapping[@intFromEnum(EntryType.Directory)].?, expected);
@@ -217,8 +217,9 @@ test "get style of cwd from empty" {
     var lsc = try LsColors.parseStr(allocator, "");
     defer lsc.deinit();
 
-    try expectEqual(Style{}, try lsc.styleForPath("."));
-    try expectEqual(Style{}, try lsc.styleForPath(".."));
+    const expected: Style = .{};
+    try expectEqual(expected, try lsc.styleForPath("."));
+    try expectEqual(expected, try lsc.styleForPath(".."));
 }
 
 test "get style of cwd from geoff.greer.fm" {
@@ -227,7 +228,7 @@ test "get style of cwd from geoff.greer.fm" {
     var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
     defer lsc.deinit();
 
-    const expected = Style{
+    const expected: Style = .{
         .foreground = .Blue,
     };
     try expectEqual(expected, try lsc.styleForPath("."));

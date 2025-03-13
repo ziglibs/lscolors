@@ -119,44 +119,44 @@ pub const EntryType = enum {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        const mode = @as(u32, @intCast(try file.mode()));
+        const mode: u32 = @intCast(try file.mode());
 
         if (os.linux.S.ISBLK(mode)) {
-            return EntryType.BlockDevice;
+            return .BlockDevice;
         } else if (os.linux.S.ISCHR(mode)) {
-            return EntryType.CharacterDevice;
+            return .CharacterDevice;
         } else if (os.linux.S.ISDIR(mode)) {
-            return EntryType.Directory;
+            return .Directory;
         } else if (os.linux.S.ISFIFO(mode)) {
-            return EntryType.FIFO;
+            return .FIFO;
         } else if (os.linux.S.ISSOCK(mode)) {
-            return EntryType.Socket;
+            return .Socket;
         } else if (mode & os.linux.S.ISUID != 0) {
-            return EntryType.Setuid;
+            return .Setuid;
         } else if (mode & os.linux.S.ISGID != 0) {
-            return EntryType.Setgid;
+            return .Setgid;
         } else if (mode & os.linux.S.ISVTX != 0) {
-            return EntryType.Sticky;
+            return .Sticky;
         } else if (os.linux.S.ISREG(mode)) {
             if (mode & os.linux.S.IXUSR != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             } else if (mode & os.linux.S.IXGRP != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             } else if (mode & os.linux.S.IXOTH != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             }
 
-            return EntryType.RegularFile;
+            return .RegularFile;
         } else if (os.linux.S.ISLNK(mode)) {
             var path_buf: [std.fs.max_path_bytes]u8 = undefined;
             const target = try std.fs.cwd().readLink(path, &path_buf);
 
-            var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
+            var target_file = std.fs.cwd().openFile(target, .{}) catch return .OrphanedSymbolicLink;
             target_file.close();
 
-            return EntryType.SymbolicLink;
+            return .SymbolicLink;
         } else {
-            return EntryType.Normal;
+            return .Normal;
         }
     }
 
@@ -164,34 +164,34 @@ pub const EntryType = enum {
         var file = try std.fs.cwd().openFile(path, .{});
         defer file.close();
 
-        const mode = @as(u32, @intCast(try file.mode()));
+        const mode: u32 = @intCast(try file.mode());
 
         if (posix.S.ISBLK(mode)) {
-            return EntryType.BlockDevice;
+            return .BlockDevice;
         } else if (posix.S.ISCHR(mode)) {
-            return EntryType.CharacterDevice;
+            return .CharacterDevice;
         } else if (posix.S.ISDIR(mode)) {
-            return EntryType.Directory;
+            return .Directory;
         } else if (posix.S.ISFIFO(mode)) {
-            return EntryType.FIFO;
+            return .FIFO;
         } else if (posix.S.ISSOCK(mode)) {
-            return EntryType.Socket;
+            return .Socket;
         } else if (mode & posix.S.ISUID != 0) {
-            return EntryType.Setuid;
+            return .Setuid;
         } else if (mode & posix.S.ISGID != 0) {
-            return EntryType.Setgid;
+            return .Setgid;
         } else if (mode & posix.S.ISVTX != 0) {
-            return EntryType.Sticky;
+            return .Sticky;
         } else if (posix.S.ISREG(mode)) {
             if (mode & posix.S.IXUSR != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             } else if (mode & posix.S.IXGRP != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             } else if (mode & posix.S.IXOTH != 0) {
-                return EntryType.ExecutableFile;
+                return .ExecutableFile;
             }
 
-            return EntryType.RegularFile;
+            return .RegularFile;
         } else if (posix.S.ISLNK(mode)) {
             var path_buf: [std.fs.max_path_bytes]u8 = undefined;
             const target = try std.fs.cwd().readLink(path, &path_buf);
@@ -199,9 +199,9 @@ pub const EntryType = enum {
             var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
             target_file.close();
 
-            return EntryType.SymbolicLink;
+            return .SymbolicLink;
         } else {
-            return EntryType.Normal;
+            return .Normal;
         }
     }
 
@@ -209,8 +209,8 @@ pub const EntryType = enum {
     /// Does not take ownership of the path
     pub fn fromPath(path: []const u8) !Self {
         switch (builtin.os.tag) {
-            .windows => return EntryType.Normal, // unsupported platform
-            .wasi => return EntryType.Normal, // unsupported platform
+            .windows => return .Normal, // unsupported platform
+            .wasi => return .Normal, // unsupported platform
 
             .linux => return try Self.fromPathLinux(path),
 

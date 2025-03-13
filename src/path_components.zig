@@ -15,7 +15,7 @@ pub const PathComponentIterator = struct {
 
     /// Initialize a path component iterator
     pub fn init(path: []const u8) Self {
-        return Self{
+        return .{
             .path = path,
             .i = 0,
         };
@@ -37,7 +37,7 @@ pub const PathComponentIterator = struct {
                 self.i += 1;
             }
 
-            return PathComponent{
+            return .{
                 .name = self.path[old_i..self.i],
                 .path = self.path[0..self.i],
             };
@@ -49,7 +49,7 @@ pub const PathComponentIterator = struct {
 
 test "path components in absolute path" {
     var path = "/usr/local/bin/zig";
-    var iter = PathComponentIterator.init(path[0..]);
+    var iter: PathComponentIterator = .init(path[0..]);
     var result: PathComponent = undefined;
 
     result = iter.next().?;
