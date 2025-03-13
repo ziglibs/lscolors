@@ -28,7 +28,11 @@ pub fn build(b: *Build) void {
 
     const exe = b.addExecutable(.{
         .name = "example",
-        .root_module = module,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("example.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     exe.root_module.addImport("lscolors", module);
 
