@@ -16,17 +16,25 @@ pub fn build(b: *Build) void {
     });
 
     const main_tests = b.addTest(.{
-        .name = "main test suite",
+        .name = "lscolors",
         .root_module = module,
     });
-    main_tests.root_module.addImport("ansi_term", ansi_term);
 
     const run_main_tests = b.addRunArtifact(main_tests);
 
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&run_main_tests.step);
 
-    const exe = b.addExecutable(.{
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = main_tests.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+
+    const docs_step = b.step("docs", "Generate documentation");
+    docs_step.dependOn(&install_docs.step);
+
+    const example = b.addExecutable(.{
         .name = "example",
         .root_module = b.createModule(.{
             .root_source_file = b.path("example.zig"),
@@ -34,12 +42,9 @@ pub fn build(b: *Build) void {
             .optimize = optimize,
         }),
     });
-    exe.root_module.addImport("lscolors", module);
+    example.root_module.addImport("lscolors", module);
 
-    const run_cmd = b.addRunArtifact(exe);
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    const run_cmd = b.addRunArtifact(example);
 
     const run_step = b.step("example", "Run the example");
     run_step.dependOn(&run_cmd.step);
