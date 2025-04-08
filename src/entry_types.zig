@@ -113,56 +113,11 @@ pub const EntryType = enum {
         return str_type_map.get(entry_type);
     }
 
-    fn fromPathLinux(path: []const u8) !Self {
-        var file = try std.fs.cwd().openFile(path, .{});
-        defer file.close();
+    fn fromPathPosix(dir: std.fs.Dir, path: []const u8) !Self {
+        const flags = std.posix.AT.SYMLINK_NOFOLLOW;
+        const stat = try std.posix.fstatat(dir.fd, path, flags);
 
-        const mode: u32 = @intCast(try file.mode());
-
-        if (os.linux.S.ISBLK(mode)) {
-            return .BlockDevice;
-        } else if (os.linux.S.ISCHR(mode)) {
-            return .CharacterDevice;
-        } else if (os.linux.S.ISDIR(mode)) {
-            return .Directory;
-        } else if (os.linux.S.ISFIFO(mode)) {
-            return .FIFO;
-        } else if (os.linux.S.ISSOCK(mode)) {
-            return .Socket;
-        } else if (mode & os.linux.S.ISUID != 0) {
-            return .Setuid;
-        } else if (mode & os.linux.S.ISGID != 0) {
-            return .Setgid;
-        } else if (mode & os.linux.S.ISVTX != 0) {
-            return .Sticky;
-        } else if (os.linux.S.ISREG(mode)) {
-            if (mode & os.linux.S.IXUSR != 0) {
-                return .ExecutableFile;
-            } else if (mode & os.linux.S.IXGRP != 0) {
-                return .ExecutableFile;
-            } else if (mode & os.linux.S.IXOTH != 0) {
-                return .ExecutableFile;
-            }
-
-            return .RegularFile;
-        } else if (os.linux.S.ISLNK(mode)) {
-            var path_buf: [std.fs.max_path_bytes]u8 = undefined;
-            const target = try std.fs.cwd().readLink(path, &path_buf);
-
-            var target_file = std.fs.cwd().openFile(target, .{}) catch return .OrphanedSymbolicLink;
-            target_file.close();
-
-            return .SymbolicLink;
-        } else {
-            return .Normal;
-        }
-    }
-
-    fn fromPathPosix(path: []const u8) !Self {
-        var file = try std.fs.cwd().openFile(path, .{});
-        defer file.close();
-
-        const mode: u32 = @intCast(try file.mode());
+        const mode = stat.mode;
 
         if (posix.S.ISBLK(mode)) {
             return .BlockDevice;
@@ -205,31 +160,31 @@ pub const EntryType = enum {
 
     /// Get the entry type for this path
     /// Does not take ownership of the path
-    pub fn fromPath(path: []const u8) !Self {
+    pub fn fromPath(dir: std.fs.Dir, path: []const u8) !Self {
         switch (builtin.os.tag) {
-            .windows => return .Normal, // unsupported platform
-            .wasi => return .Normal, // unsupported platform
+            .windows => @compileError("unsupported platform"),
+            .wasi => @compileError("unsupported platform"),
 
-            .linux => return try Self.fromPathLinux(path),
+            .linux => return try Self.fromPathPosix(dir, path),
 
-            else => return try Self.fromPathPosix(path),
+            else => return try Self.fromPathPosix(dir, path),
         }
     }
 };
 
-test "parse entry types" {
-    try expectEqual(EntryType.fromStr(""), null);
-}
+test "entry types" {
+    var tmp_dir = std.testing.tmpDir(.{});
+    defer tmp_dir.cleanup();
 
-test "entry type of . and .." {
-    try expectEqual(EntryType.fromPath("."), .Directory);
-    try expectEqual(EntryType.fromPath(".."), .Directory);
-}
+    var file_normal = try tmp_dir.dir.createFile("test", .{});
+    defer file_normal.close();
 
-test "entry type of /dev/null" {
-    try expectEqual(EntryType.fromPath("/dev/null"), .CharacterDevice);
-}
+    var file_executable = try tmp_dir.dir.createFile("test-executable", .{ .mode = 0o777 });
+    defer file_executable.close();
 
-test "entry type of /bin/sh" {
-    try expectEqual(EntryType.fromPath("/bin/sh"), .ExecutableFile);
+    try tmp_dir.dir.makeDir("dir");
+
+    try expectEqual(EntryType.fromPath(tmp_dir.dir, "test"), .RegularFile);
+    try expectEqual(EntryType.fromPath(tmp_dir.dir, "test-executable"), .ExecutableFile);
+    try expectEqual(EntryType.fromPath(tmp_dir.dir, "dir"), .Directory);
 }

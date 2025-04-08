@@ -53,7 +53,7 @@ pub const StyledPathComponents = struct {
         var current_style: ?Style = Style{};
 
         while (iter.next()) |component| {
-            const new_style = value.lsc.styleForPath(component.path) catch Style{};
+            const new_style = value.lsc.styleForPath(std.fs.cwd(), component.path) catch Style{};
             defer current_style = new_style;
 
             // Update style

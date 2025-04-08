@@ -127,9 +127,9 @@ pub const LsColors = struct {
 
     pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || std.fs.Dir.ReadLinkError || std.fs.File.ModeError;
 
-    /// Queries the style for this particular path.
+    /// Queries the style for this particular path, relative to dir.
     /// Does not take ownership of the path. Requires no allocations.
-    pub fn styleForPath(self: Self, initial_path: []const u8) StyleForPathError!Style {
+    pub fn styleForPath(self: Self, dir: std.fs.Dir, initial_path: []const u8) StyleForPathError!Style {
         const max_link_depth = 20;
         var i: usize = 0;
 
@@ -137,7 +137,7 @@ pub const LsColors = struct {
         var path = initial_path;
 
         while (i < max_link_depth) : (i += 1) {
-            const entry_type = try EntryType.fromPath(path);
+            const entry_type = try EntryType.fromPath(dir, path);
             const style_for_type = self.entry_type_mapping.get(entry_type);
 
             if (style_for_type) |sty| {
@@ -168,7 +168,7 @@ pub const LsColors = struct {
     pub fn styled(self: Self, path: []const u8) StyleForPathError!StyledPath {
         return .{
             .path = path,
-            .style = try self.styleForPath(path),
+            .style = try self.styleForPath(std.fs.cwd(), path),
         };
     }
 
@@ -216,8 +216,8 @@ test "get style of cwd from empty" {
     defer lsc.deinit();
 
     const expected: Style = .{};
-    try expectEqual(expected, try lsc.styleForPath("."));
-    try expectEqual(expected, try lsc.styleForPath(".."));
+    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), "."));
+    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), ".."));
 }
 
 test "get style of cwd from geoff.greer.fm" {
@@ -229,8 +229,8 @@ test "get style of cwd from geoff.greer.fm" {
     const expected: Style = .{
         .foreground = .Blue,
     };
-    try expectEqual(expected, try lsc.styleForPath("."));
-    try expectEqual(expected, try lsc.styleForPath(".."));
+    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), "."));
+    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), ".."));
 }
 
 test "get styled string from default" {
