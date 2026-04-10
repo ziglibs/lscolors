@@ -1,7 +1,7 @@
 .{
     .name = .lscolors,
     .fingerprint = 0x4c9ac217b91e4bee,
-    .version = "0.1.0",
+    .version = "0.2.0",
 
     .minimum_zig_version = "0.15.2",
 
