@@ -3,12 +3,12 @@
     .fingerprint = 0x4c9ac217b91e4bee,
     .version = "0.1.0",
 
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.15.2",
 
     .dependencies = .{
         .ansi_term = .{
-            .url = "git+https://github.com/ziglibs/ansi_term?ref=v0.1.0#d88bc63e91e2c1cd2e60aaf51196860375c78042",
-            .hash = "ansi_term-0.1.0-_baAy9djAABNQdiVAt7Iwk4wlBh2kL-UAxEDd3wDs-09",
+            .url = "git+https://github.com/ziglibs/ansi-term?ref=v0.2.0#7e7d1a6483a37a92c5857ec9a49b3e5085657352",
+            .hash = "ansi_term-0.2.0-_baAywpoAADR8iCR6FmS5BVkuEwL4sPayaDH1qlil85E",
         },
     },
     .paths = .{

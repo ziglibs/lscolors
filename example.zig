@@ -15,6 +15,6 @@ pub fn main() !void {
 
     var iterator = dir.iterate();
     while (try iterator.next()) |itm| {
-        std.log.info("{}", .{try lsc.styled(itm.name)});
+        std.log.info("{f}", .{try lsc.styled(itm.name)});
     }
 }

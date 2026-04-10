@@ -240,7 +240,7 @@ test "get styled string from default" {
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m.\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{try lsc.styled(".")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{try lsc.styled(".")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);
@@ -253,7 +253,7 @@ test "get styled path components from default (directory)" {
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m.\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents(".")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents(".")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);
@@ -266,7 +266,7 @@ test "get styled path components from default (file)" {
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m./\x1B[0mmain.zig";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{lsc.styledComponents("./main.zig")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents("./main.zig")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);

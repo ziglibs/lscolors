@@ -1,5 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
+const Writer = std.Io.Writer;
 
 const ansi_term = @import("ansi_term");
 const style = ansi_term.style;
@@ -19,13 +20,8 @@ pub const StyledPath = struct {
 
     pub fn format(
         value: Self,
-        comptime fmt: []const u8,
-        options: std.fmt.FormatOptions,
-        writer: anytype,
-    ) @TypeOf(writer).Error!void {
-        _ = fmt;
-        _ = options;
-
+        writer: *Writer,
+    ) Writer.Error!void {
         const sty = value.style;
 
         try ansi_format.updateStyle(writer, sty, .{});
@@ -42,13 +38,8 @@ pub const StyledPathComponents = struct {
 
     pub fn format(
         value: Self,
-        comptime fmt: []const u8,
-        options: std.fmt.FormatOptions,
-        writer: anytype,
-    ) @TypeOf(writer).Error!void {
-        _ = fmt;
-        _ = options;
-
+        writer: *Writer,
+    ) Writer.Error!void {
         var iter = PathComponentIterator.init(value.path);
         var current_style: ?Style = Style{};
 
@@ -76,7 +67,7 @@ test "format default styled path" {
     const allocator = std.testing.allocator;
 
     const expected = "/usr/local/bin/zig";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{styled_path});
     defer allocator.free(actual);
 
     try testing.expectEqualSlices(u8, expected, actual);
@@ -93,7 +84,7 @@ test "format bold path" {
     const allocator = std.testing.allocator;
 
     const expected = "\x1B[1m/usr/local/bin/zig\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{styled_path});
     defer allocator.free(actual);
 
     try testing.expectEqualSlices(u8, expected, actual);
@@ -113,7 +104,7 @@ test "format bold and italic path" {
     const allocator = std.testing.allocator;
 
     const expected = "\x1B[1;3m/usr/local/bin/zig\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{styled_path});
     defer allocator.free(actual);
 
     try testing.expectEqualSlices(u8, expected, actual);
@@ -130,7 +121,7 @@ test "format colored path" {
     const allocator = std.testing.allocator;
 
     const expected = "\x1B[31m/usr/local/bin/zig\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{}", .{styled_path});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{styled_path});
     defer allocator.free(actual);
 
     try testing.expectEqualSlices(u8, expected, actual);
