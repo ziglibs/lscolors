@@ -3,7 +3,7 @@
 ![CI](https://github.com/ziglibs/zig-lscolors/workflows/CI/badge.svg)
 
 A zig library for colorizing paths according to the `LS_COLORS`
-environment variable. Designed to work with Zig 0.15.2.
+environment variable. Designed to work with Zig 0.16.0.
 
 ## Quick Example
 
@@ -12,20 +12,19 @@ const std = @import("std");
 
 const LsColors = @import("lscolors").LsColors;
 
-pub fn main() !void {
-    var gpa: std.heap.DebugAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.arena.allocator();
+    const io = init.io;
 
-    var lsc = try LsColors.fromEnv(allocator);
+    var lsc = try LsColors.fromEnv(allocator, init.environ_map);
     defer lsc.deinit();
 
-    var dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
-    defer dir.close();
+    var dir = try std.Io.Dir.cwd().openDir(io, ".", .{ .iterate = true });
+    defer dir.close(io);
 
     var iterator = dir.iterate();
-    while (try iterator.next()) |itm| {
-        std.log.info("{}", .{try lsc.styled(itm.name)});
+    while (try iterator.next(io)) |itm| {
+        std.log.info("{f}", .{try lsc.styled(io, itm.name)});
     }
 }
 ```
