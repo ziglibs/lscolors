@@ -1,10 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-const os = std.os;
-const posix = std.posix;
 const StaticStringMap = std.StaticStringMap;
-const File = std.fs.File;
+const posix = std.posix;
 const expectEqual = std.testing.expectEqual;
 
 pub const EntryType = enum {
@@ -113,21 +111,21 @@ pub const EntryType = enum {
         return str_type_map.get(entry_type);
     }
 
-    fn fromPathPosix(dir: std.fs.Dir, path: []const u8) !Self {
-        const flags = std.posix.AT.SYMLINK_NOFOLLOW;
-        const stat = try std.posix.fstatat(dir.fd, path, flags);
+    fn fromPathPosix(io: std.Io, dir: std.Io.Dir, path: []const u8) !Self {
+        const stat = try dir.statFile(io, path, .{ .follow_symlinks = false });
 
-        const mode = stat.mode;
+        const kind = stat.kind;
+        const mode = stat.permissions.toMode();
 
-        if (posix.S.ISBLK(mode)) {
+        if (kind == .block_device) {
             return .BlockDevice;
-        } else if (posix.S.ISCHR(mode)) {
+        } else if (kind == .character_device) {
             return .CharacterDevice;
-        } else if (posix.S.ISDIR(mode)) {
+        } else if (kind == .directory) {
             return .Directory;
-        } else if (posix.S.ISFIFO(mode)) {
+        } else if (kind == .named_pipe) {
             return .FIFO;
-        } else if (posix.S.ISSOCK(mode)) {
+        } else if (kind == .unix_domain_socket) {
             return .Socket;
         } else if (mode & posix.S.ISUID != 0) {
             return .Setuid;
@@ -135,7 +133,7 @@ pub const EntryType = enum {
             return .Setgid;
         } else if (mode & posix.S.ISVTX != 0) {
             return .Sticky;
-        } else if (posix.S.ISREG(mode)) {
+        } else if (kind == .file) {
             if (mode & posix.S.IXUSR != 0) {
                 return .ExecutableFile;
             } else if (mode & posix.S.IXGRP != 0) {
@@ -145,12 +143,12 @@ pub const EntryType = enum {
             }
 
             return .RegularFile;
-        } else if (posix.S.ISLNK(mode)) {
+        } else if (kind == .sym_link) {
             var path_buf: [std.fs.max_path_bytes]u8 = undefined;
-            const target = try std.fs.cwd().readLink(path, &path_buf);
+            const target_len = try std.Io.Dir.cwd().readLink(io, path, &path_buf);
 
-            var target_file = std.fs.cwd().openFile(target, .{}) catch return EntryType.OrphanedSymbolicLink;
-            target_file.close();
+            var target_file = std.Io.Dir.cwd().openFile(io, path_buf[0..target_len], .{}) catch return .OrphanedSymbolicLink;
+            target_file.close(io);
 
             return .SymbolicLink;
         } else {
@@ -160,31 +158,32 @@ pub const EntryType = enum {
 
     /// Get the entry type for this path
     /// Does not take ownership of the path
-    pub fn fromPath(dir: std.fs.Dir, path: []const u8) !Self {
+    pub fn fromPath(io: std.Io, dir: std.Io.Dir, path: []const u8) !Self {
         switch (builtin.os.tag) {
             .windows => @compileError("unsupported platform"),
             .wasi => @compileError("unsupported platform"),
 
-            .linux => return try Self.fromPathPosix(dir, path),
+            .linux => return try Self.fromPathPosix(io, dir, path),
 
-            else => return try Self.fromPathPosix(dir, path),
+            else => return try Self.fromPathPosix(io, dir, path),
         }
     }
 };
 
 test "entry types" {
+    const io = std.testing.io;
     var tmp_dir = std.testing.tmpDir(.{});
     defer tmp_dir.cleanup();
 
-    var file_normal = try tmp_dir.dir.createFile("test", .{});
-    defer file_normal.close();
+    var file_normal = try tmp_dir.dir.createFile(io, "test", .{});
+    defer file_normal.close(io);
 
-    var file_executable = try tmp_dir.dir.createFile("test-executable", .{ .mode = 0o777 });
-    defer file_executable.close();
+    var file_executable = try tmp_dir.dir.createFile(io, "test-executable", .{ .permissions = .executable_file });
+    defer file_executable.close(io);
 
-    try tmp_dir.dir.makeDir("dir");
+    try tmp_dir.dir.createDir(io, "dir", .default_dir);
 
-    try expectEqual(EntryType.fromPath(tmp_dir.dir, "test"), .RegularFile);
-    try expectEqual(EntryType.fromPath(tmp_dir.dir, "test-executable"), .ExecutableFile);
-    try expectEqual(EntryType.fromPath(tmp_dir.dir, "dir"), .Directory);
+    try expectEqual(EntryType.fromPath(io, tmp_dir.dir, "test"), .RegularFile);
+    try expectEqual(EntryType.fromPath(io, tmp_dir.dir, "test-executable"), .ExecutableFile);
+    try expectEqual(EntryType.fromPath(io, tmp_dir.dir, "dir"), .Directory);
 }

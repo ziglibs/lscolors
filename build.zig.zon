@@ -3,7 +3,7 @@
     .fingerprint = 0x4c9ac217b91e4bee,
     .version = "0.2.0",
 
-    .minimum_zig_version = "0.15.2",
+    .minimum_zig_version = "0.16.0",
 
     .dependencies = .{
         .ansi_term = .{

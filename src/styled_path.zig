@@ -31,6 +31,7 @@ pub const StyledPath = struct {
 };
 
 pub const StyledPathComponents = struct {
+    io: std.Io,
     path: []const u8,
     lsc: *LsColors,
 
@@ -44,7 +45,7 @@ pub const StyledPathComponents = struct {
         var current_style: ?Style = Style{};
 
         while (iter.next()) |component| {
-            const new_style = value.lsc.styleForPath(std.fs.cwd(), component.path) catch Style{};
+            const new_style = value.lsc.styleForPath(value.io, std.Io.Dir.cwd(), component.path) catch Style{};
             defer current_style = new_style;
 
             // Update style

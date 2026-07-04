@@ -107,10 +107,10 @@ pub const LsColors = struct {
     /// Parses the current environment variable `LS_COLORS`
     /// If the environment variable does not exist, falls back
     /// to the default set of LS_COLORS rules
-    pub fn fromEnv(alloc: Allocator) !Self {
-        if (std.process.getEnvVarOwned(alloc, "LS_COLORS")) |env| {
+    pub fn fromEnv(alloc: Allocator, environ_map: *std.process.Environ.Map) !Self {
+        if (environ_map.get("LS_COLORS")) |env| {
             return Self.parseStr(alloc, env);
-        } else |_| {
+        } else {
             return Self.default(alloc);
         }
     }
@@ -125,24 +125,25 @@ pub const LsColors = struct {
         self.pattern_mapping.deinit(self.allocator);
     }
 
-    pub const StyleForPathError = error{TooManySymlinks} || std.fs.File.OpenError || std.fs.Dir.ReadLinkError || std.fs.File.ModeError;
+    pub const StyleForPathError = error{TooManySymlinks} || std.Io.File.OpenError || std.Io.Dir.ReadLinkError || std.Io.Dir.StatFileError;
 
     /// Queries the style for this particular path, relative to dir.
     /// Does not take ownership of the path. Requires no allocations.
-    pub fn styleForPath(self: Self, dir: std.fs.Dir, initial_path: []const u8) StyleForPathError!Style {
+    pub fn styleForPath(self: Self, io: std.Io, dir: std.Io.Dir, initial_path: []const u8) StyleForPathError!Style {
         const max_link_depth = 20;
         var i: usize = 0;
 
-        var path_buf: [std.fs.max_path_bytes]u8 = undefined;
+        var path_buf: [std.Io.Dir.max_path_bytes]u8 = undefined;
         var path = initial_path;
 
         while (i < max_link_depth) : (i += 1) {
-            const entry_type = try EntryType.fromPath(dir, path);
+            const entry_type = try EntryType.fromPath(io, dir, path);
             const style_for_type = self.entry_type_mapping.get(entry_type);
 
             if (style_for_type) |sty| {
                 if (entry_type == .SymbolicLink and self.ln_target) {
-                    path = try std.fs.cwd().readLink(path, &path_buf);
+                    const target_len = try dir.readLink(io, path, &path_buf);
+                    path = path_buf[0..target_len];
                     continue;
                 }
 
@@ -165,18 +166,19 @@ pub const LsColors = struct {
 
     /// Creates a styled path struct for easy styled printing.
     /// Does not take ownership of the path. Requires no allocations.
-    pub fn styled(self: Self, path: []const u8) StyleForPathError!StyledPath {
+    pub fn styled(self: Self, io: std.Io, path: []const u8) StyleForPathError!StyledPath {
         return .{
             .path = path,
-            .style = try self.styleForPath(std.fs.cwd(), path),
+            .style = try self.styleForPath(io, std.Io.Dir.cwd(), path),
         };
     }
 
     /// Returns a StyledPathComponent instance which, when formatted,
     /// nicely stylizes each component (directories and files) of the
     /// path with the respective style
-    pub fn styledComponents(self: *Self, path: []const u8) StyledPathComponents {
+    pub fn styledComponents(self: *Self, io: std.Io, path: []const u8) StyledPathComponents {
         return .{
+            .io = io,
             .path = path,
             .lsc = self,
         };
@@ -211,17 +213,19 @@ test "parse geoff.greer.fm default lscolors" {
 
 test "get style of cwd from empty" {
     const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
     var lsc = try LsColors.parseStr(allocator, "");
     defer lsc.deinit();
 
     const expected: Style = .{};
-    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), "."));
-    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), ".."));
+    try expectEqual(expected, try lsc.styleForPath(io, std.Io.Dir.cwd(), "."));
+    try expectEqual(expected, try lsc.styleForPath(io, std.Io.Dir.cwd(), ".."));
 }
 
 test "get style of cwd from geoff.greer.fm" {
     const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
     var lsc = try LsColors.parseStr(allocator, "di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43");
     defer lsc.deinit();
@@ -229,18 +233,19 @@ test "get style of cwd from geoff.greer.fm" {
     const expected: Style = .{
         .foreground = .Blue,
     };
-    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), "."));
-    try expectEqual(expected, try lsc.styleForPath(std.fs.cwd(), ".."));
+    try expectEqual(expected, try lsc.styleForPath(io, std.Io.Dir.cwd(), "."));
+    try expectEqual(expected, try lsc.styleForPath(io, std.Io.Dir.cwd(), ".."));
 }
 
 test "get styled string from default" {
     const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
     var lsc = try LsColors.default(allocator);
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m.\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{f}", .{try lsc.styled(".")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{try lsc.styled(io, ".")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);
@@ -248,12 +253,13 @@ test "get styled string from default" {
 
 test "get styled path components from default (directory)" {
     const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
     var lsc = try LsColors.default(allocator);
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m.\x1B[0m";
-    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents(".")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents(io, ".")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);
@@ -261,12 +267,13 @@ test "get styled path components from default (directory)" {
 
 test "get styled path components from default (file)" {
     const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
     var lsc = try LsColors.default(allocator);
     defer lsc.deinit();
 
     const expected = "\x1B[1;34m./\x1B[0mmain.zig";
-    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents("./main.zig")});
+    const actual = try std.fmt.allocPrint(allocator, "{f}", .{lsc.styledComponents(io, "./main.zig")});
     defer allocator.free(actual);
 
     try expectEqualSlices(u8, expected, actual);
